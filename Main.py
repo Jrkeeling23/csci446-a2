@@ -2,12 +2,8 @@
 Authors: George Engel, Cory Johns, Justin Keeling 
 """
 
-running = True
-output_file = open('output.txt', 'w+')
-
-
 def read_in_maze(string):
-    global running
+    global running, auto_run
 
     def __build_maze(file):
         """
@@ -26,14 +22,20 @@ def read_in_maze(string):
                     if __char != '\n':
                         __x_tmp.append(__char)
                 maze_xy.append(__x_tmp)
-        # convert into nodes
-        return
+
+    def print_maze(maze):
+        for row in maze:
+            print(row)
 
     # the maze will go here, overwrites for each run
     maze_xy = []
 
     # maze txt files must be in the same directory with the given names
-    if string == '5':
+    if string == "Q" or string == "q":
+        running = False
+    elif string == "A" or string == "a":
+        auto_run = True
+    elif string == '5':
         __build_maze("assignment-resources/5x5maze.txt")
     elif string == '7':
         __build_maze("assignment-resources/7x7maze.txt")
@@ -50,19 +52,32 @@ def read_in_maze(string):
     else:
         print("Maze not found")
 
+    print_maze(maze_xy)
 
-    print(maze_xy)
-
-
-input_list = ["5", "7", "8", "9", "10", "12", "14"]
+# "Global" variables
+running = True
+auto_run = False
+# the output file
+output_file = open('output.txt', 'w+')
+# input for auto run
+input_list = ["5", "7", "8", "9", "10", "12", "14", "Q"]
+# index for auto run
 index = 0
+
+# main program loop
 while running:
-    # inp = "" + input("Enter the maze type you would like to run, Enter N where N is the size of the maze or Enter Q to quit: ")
-    print("Automatic running enabled: ", input_list[index])
-    inp = input_list[index]
-
+    # auto run emulates sequential keyboard input, to save the user hassle
+    if auto_run:
+        print("Automatic running enabled: ", input_list[index])
+        inp = input_list[index]
+        index += 1
+    # normal input
+    else:
+        inp = "" + input("Enter the maze size you would like to run, or enter an option:\n"
+                         "Enter N where N is the size of the maze, "
+                         "Enter A to start automatic running, "
+                         "or Enter Q to quit:\n")
+    # always do this stuff
     read_in_maze(inp)
-
-    index += 1
 
 output_file.close()
