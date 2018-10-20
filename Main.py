@@ -2,6 +2,8 @@
 Authors: George Engel, Cory Johns, Justin Keeling 
 """
 
+import SolveMaze as SM
+
 def read_in_maze(string):
     global running, auto_run
 
@@ -53,6 +55,7 @@ def read_in_maze(string):
         print("Maze not found")
 
     print_maze(maze_xy)
+    return maze_xy
 
 # "Global" variables
 running = True
@@ -78,6 +81,6 @@ while running:
                          "Enter A to start automatic running, "
                          "or Enter Q to quit:\n")
     # always do this stuff
-    read_in_maze(inp)
-
+    #init new solvemaze here and input 2D list returned by readinmaze
+    solve = SM.SolveMaze(read_in_maze(inp))
 output_file.close()
