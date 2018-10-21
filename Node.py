@@ -5,11 +5,11 @@ class Node:
         self.state = state
         self.children = []
         # When creating a node, add it as a child to its parent
-        if(parent is not None):
+        if parent is not None:
             parent.append_child(self)
 
     def append_child(self, node):
         self.children.append(node)
 
-    def remove_Child(self, node):
-        self.remove_Child(node)
+    def remove_child(self, node):
+        self.remove_child(node)

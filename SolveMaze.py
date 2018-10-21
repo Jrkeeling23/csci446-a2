@@ -15,7 +15,7 @@ class SolveMaze:
         # Make list of unique colors
         self.domain = self.findUniqueColors()
         # lists the domain
-        print("\nDomain: "+str(self.domain))
+        print("\nDomain: " + str(self.domain))
         # use index of a 'COLOR' in domain to find it's numerical value
 
         # make empty color lists for each unique color in domain
@@ -37,6 +37,29 @@ class SolveMaze:
         # TODO: Make method for making a node from color & pos
 
         print("Maze Sovler Initialized")
+
+    def select_start_states(self):
+        """
+        Makes a list of start states, one for each color in the order of the domain
+        :return: list of start states
+        """
+        init_node_list = []
+        for color in self.domain:
+            # get list of port indexes, organized by domain order
+            for row in self.initMaze:
+                try:
+                    # get coordinates of the first port of this color
+                    coords = [self.initMaze.index(row), row.index(color)]
+                    break
+                except ValueError:
+                    # wasn't in the list
+                    pass
+
+            # make state for port
+            init_node_list.append(S.State(color, coords))
+
+        # return list of start states
+        return init_node_list
 
     def validate(self):
         pass
