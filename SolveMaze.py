@@ -1,20 +1,16 @@
 import Tree as T
 import State as S
 import Node as N
-import enum as ENUM
+
 
 class SolveMaze:
-
-    # TODO:
-    # Lists of color positions (in sync with the STATE TREE)
-    # Make 2D boolean array to check that a state has been colored already (Check by position)
 
     colorLists = []
 
     def __init__(self, maze):
         self.initMaze = maze
         # Make list of unique colors
-        self.domain = self.findUniqueColors()
+        self.domain = self.find_unique_colors()
         # lists the domain
         print("\nDomain: " + str(self.domain))
         # use index of a 'COLOR' in domain to find it's numerical value
@@ -32,10 +28,8 @@ class SolveMaze:
         # TODO: Make method for choosing start
         init_Node = N.Node(S.State(color, coords, None))
 
-        #initializes the Tree
+        # initializes the Tree
         self.tree = T.Tree(init_Node)
-
-        # TODO: Make method for making a node from color & pos
 
         print("Maze Sovler Initialized")
 
@@ -66,21 +60,22 @@ class SolveMaze:
         pass
 
     def findUniqueColors(self):
-        listC = []
+        list_c = []
         for x in self.initMaze:
             for y in x:
-                if(not listC.__contains__(y))and (y!='_'):
-                    listC.append(y)
-        return listC
+                if(not list_c.__contains__(y))and (y != '_'):
+                    list_c.append(y)
+        return list_c
 
     def check_zigzag(self):
         # TODO: Add logic for checking zigzag using the list of Color's positions
         pass
 
-    # TODO: Add method for checking if a node is adjecent to others in the list not including the last 2 coords entered in the list
+    # TODO: Add method for checking if a node is adjecent to others in the list not including the last 2 coords
+    # entered in the list
     def check_adj(self):
 
-        compare = [[1,0],[0,-1]]
+        compare = [[1,0],[0,-1],[-1,0],[0,1]]
 
         # Use last x/y coords in the ColorList as the State being checked
         # the 2nd to last x/y coord set in the Color list would need to be subtracted from the State being checked,
@@ -96,7 +91,6 @@ class SolveMaze:
     def constraint_check(self):
         pass
 
-    # TODO: Add 2D boolean array manipulation here, as well as color list adding
     def evaluate(self):
         # Check constraints for Tree's current_Node
         result = self.constraint_check()
@@ -120,12 +114,12 @@ class SolveMaze:
         color_val = self.domain.indexOf(color)
         self.colorLists[color_val].append(node.state.pos)
 
-    #Should always remove the last node from color list, and sets the hasBeenColored pos to False
+    # Should always remove the last node from color list, and sets the hasBeenColored pos to False
     def remove_from_trackers(self, node):
         x, y = node.state.pos
         self.hasBeenColored[x][y] = False
 
-        #removes last item from the color list
+        # removes last item from the color list
         color = node.state.color
         color_val = self.domain.indexOf(color)
         self.colorLists[color_val][:-1]
