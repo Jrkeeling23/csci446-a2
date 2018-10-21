@@ -1,6 +1,7 @@
 import Tree as T
 import State as S
 import Node as N
+import enum as ENUM
 
 class SolveMaze:
 
@@ -72,7 +73,7 @@ class SolveMaze:
                     listC.append(y)
         return listC
 
-    def checkZigZag(self):
+    def check_zigzag(self):
         # TODO: Add logic for checking zigzag using the list of Color's positions
         pass
 
@@ -103,8 +104,28 @@ class SolveMaze:
         if result:
             # Move Tree forward
             self.tree.forward_node()
-            pass
+            self.add_to_trackers(self.tree.current_Node)
+
         else:
-            pass
-        # Manipulate 2D boolean array accordingly, and add/remove from colorList
-        pass
+            self.remove_from_trackers(self.tree.current_Node)
+            self.tree.backtrack_node()
+
+    # Trackers are the 2D boolean array & color list
+    def add_to_trackers(self, node):
+        # pos should be a list of x and y int
+        x, y = node.state.pos
+        self.hasBeenColored[x][y] = True
+
+        color = node.state.color
+        color_val = self.domain.indexOf(color)
+        self.colorLists[color_val].append(node.state.pos)
+
+    #Should always remove the last node from color list, and sets the hasBeenColored pos to False
+    def remove_from_trackers(self, node):
+        x, y = node.state.pos
+        self.hasBeenColored[x][y] = False
+
+        #removes last item from the color list
+        color = node.state.color
+        color_val = self.domain.indexOf(color)
+        self.colorLists[color_val][:-1]
