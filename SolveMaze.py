@@ -21,15 +21,18 @@ class SolveMaze:
 
         # initializes 2D boolean array for keeping track of whether a state has been colored already or not
         temp = len(maze[0])
-        self.hasBeenColored = [[False for i in range(temp)] for j in range(temp)]
+        self.hasBeenColored = [[False]*temp for j in range(temp)]
         # TODO: add logic for keeping track of these True/False values according to color List's coords
         # (Update when backtracking and moving forward)
 
-        # TODO: Make method for choosing start
-        init_Node = N.Node(S.State(color, coords, None))
+        # get list of each starting state
+        # TODO once color #n is done we need to get color #n+1 from the following list
+        self.start_states = self.select_start_states()
+        # set the root node to the first start state w/ no parent
+        init_node = N.Node(self.start_states[0], None)
 
         # initializes the Tree
-        self.tree = T.Tree(init_Node)
+        self.tree = T.Tree(init_node)
 
         print("Maze Sovler Initialized")
 
@@ -39,6 +42,7 @@ class SolveMaze:
         :return: list of start states
         """
         init_node_list = []
+        coords = None
         for color in self.domain:
             # get list of port indexes, organized by domain order
             for row in self.initMaze:
@@ -56,10 +60,7 @@ class SolveMaze:
         # return list of start states
         return init_node_list
 
-    def validate(self):
-        pass
-
-    def findUniqueColors(self):
+    def find_unique_colors(self):
         list_c = []
         for x in self.initMaze:
             for y in x:
@@ -71,7 +72,7 @@ class SolveMaze:
         # TODO: Add logic for checking zigzag using the list of Color's positions
         pass
 
-    # TODO: Add method for checking if a node is adjecent to others in the list not including the last 2 coords
+    # TODO: Add method for checking if a node is adjacent to others in the list not including the last 2 coords
     # entered in the list
     def check_adj(self):
 
@@ -84,12 +85,14 @@ class SolveMaze:
         pass
 
     def make_node(self, color, pos):
-        node = N.Node(S.State(color, pos, self.tree.current_Node))
+        node = N.Node(S.State(color, pos), self.tree.current_Node)
         return node
 
     # TODO: Make constraints evaluations
     def constraint_check(self):
-        pass
+        # TODO evaluate constraints, return end result
+        # evaluates on Tree's current_Node
+        return False
 
     def evaluate(self):
         # Check constraints for Tree's current_Node
@@ -99,27 +102,30 @@ class SolveMaze:
             # Move Tree forward
             self.tree.forward_node()
             self.add_to_trackers(self.tree.current_Node)
-
         else:
             self.remove_from_trackers(self.tree.current_Node)
             self.tree.backtrack_node()
 
     # Trackers are the 2D boolean array & color list
     def add_to_trackers(self, node):
-        # pos should be a list of x and y int
+        # pos should be a list of x and y ints, i.e. [x, y]
         x, y = node.state.pos
+        # set the boolean array at this node's location to True
         self.hasBeenColored[x][y] = True
 
         color = node.state.color
-        color_val = self.domain.indexOf(color)
+        color_val = self.domain.index(color)
+        # add this node's location set to the end of its color's list
         self.colorLists[color_val].append(node.state.pos)
 
     # Should always remove the last node from color list, and sets the hasBeenColored pos to False
     def remove_from_trackers(self, node):
         x, y = node.state.pos
+        # set the boolean array at this node's location to False
         self.hasBeenColored[x][y] = False
 
         # removes last item from the color list
         color = node.state.color
-        color_val = self.domain.indexOf(color)
-        self.colorLists[color_val][:-1]
+        color_val = self.domain.index(color)
+        # remove last set from this color's list
+        self.colorLists[color_val].pop()
