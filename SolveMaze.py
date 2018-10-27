@@ -18,8 +18,6 @@ class SolveMaze:
             # initializes 2D boolean array for keeping track of whether a state has been colored already or not
             temp = len(maze[0])
             self.has_been_colored = [[False] * temp for i in range(temp)]
-            # TODO: add logic for keeping track of these True/False values according to color List's coords
-            # (Update when backtracking and moving forward)
 
             # get list of each starting state
             # TODO once color #n is done we need to get color #n+1 from the following list
@@ -82,8 +80,38 @@ class SolveMaze:
         return list_c
 
     def check_zigzag(self):
-        # TODO: Add logic for checking zigzag using the list of Color's positions
-        pass
+        """
+        Checks if the current state has no zig-zags
+        :return: True if this constraint passes, False otherwise
+        """
+        # get index of the current color
+        i = self.domain.index(self.tree.current_Node.state.color)
+
+        # if length of the current color list is less then 4, there can't be a zig zag
+        if len(self.color_lists[i]) > 4:
+            # find pos of adjacent states
+            compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+            x, y = self.tree.current_Node.state.pos
+            adj_nodes = [[x + dx, y + dy] for dx, dy in compare]
+
+            # remove pos of the prev state
+            prev = self.color_lists[i][-2]
+            for pos in adj_nodes:
+                if pos == prev:
+                    # remove pos from adj_nodes
+                    adj_nodes.remove(pos)
+                    break
+
+            for pos in adj_nodes:
+                for test_pos in self.color_lists[i][:-3]:
+                    if pos == test_pos:
+                        # found one, so we have a zig zag
+                        return False
+
+            # none were found, so there were no zig-zags
+            return True
+        else:
+            return True
 
     # TODO: Add method for checking if a node is adjacent to others in the list not including the last 2 coords
     # entered in the list
@@ -103,11 +131,24 @@ class SolveMaze:
 
     # TODO: Make constraints evaluations
     def constraint_check(self):
-        # TODO evaluate constraints, return end result
-        # evaluates on Tree's current_Node
+        """
+        TODO evaluate constraints, return end result
+        evaluates on Tree's current_Node
+        :return: 
+        """
+        # No zig zags
+
+        # One color per square
+
+        # All squares have exactly one color (no empty squares)
+
         return False
 
     def evaluate(self):
+        """
+        Evaluates the position and ether moves forward or backtracks in the tree
+        :return: Nothing
+        """
         # Check constraints for Tree's current_Node
         result = self.constraint_check()
         # According to constraint results, either backtrack, or forward Tree's current_Node
