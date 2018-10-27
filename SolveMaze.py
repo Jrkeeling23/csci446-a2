@@ -7,6 +7,7 @@ class SolveMaze:
 
     def __init__(self, maze):
         if len(maze) > 0:
+            self.smart = False
             self.initMaze = maze
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -158,17 +159,21 @@ class SolveMaze:
     # TODO: Make constraints evaluations
     def constraint_check(self):
         """
-        TODO evaluate constraints, return end result
+        evaluates constraints and returns the result
         evaluates on Tree's current_Node
-        :return: 
+        :return: True if all test passed, False otherwise
         """
         # No zig zags
+        if not self.check_zigzag():
+            # zigzag constraint failed
+            return False
 
-        # One color per square
+        if self.smart:
+            # TODO add extra smart checks here
+            pass
 
-        # All squares have exactly one color (no empty squares)
-
-        return False
+        # all tests passed
+        return True
 
     def evaluate(self):
         """
