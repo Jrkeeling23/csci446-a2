@@ -28,6 +28,8 @@ class SolveMaze:
 
             # initializes the Tree
             self.tree = T.Tree(init_node)
+            # initialize trackers
+            self.add_to_trackers(self.tree.current_node)
 
             # lists the domain
             print("\nDomain: " + str(self.domain))
@@ -51,24 +53,23 @@ class SolveMaze:
         for color in self.domain:
             # get list of port indexes, organized by domain order
             for row in self.initMaze:
-                try:
-                    # get coordinates of the all the ports of this color in this row
-                    # coords = [self.initMaze.index(row), row.index(color)]
-                    coords.append([self.initMaze.index(row), [i for i, x in enumerate(row) if x == color]])
-                except ValueError:
-                    # wasn't in the row
-                    pass
+                # get coordinates of the all the ports of this color in this row
+                # coords = [self.initMaze.index(row), row.index(color)]
+                col_index = [i for i, x in enumerate(row) if x == color]
+                row_index = self.initMaze.index(row)
 
-            if len(coords) > 1:
-                # different rows
-                # make states for port
-                start_node_list.append(S.State(color, [coords[0][0], coords[0][1][0]]))
-                end_node_list.append(S.State(color, [coords[1][0], coords[1][1][0]]))
-            else:
-                # same row
-                # make states for port
-                start_node_list.append(S.State(color, [coords[0][0], coords[0][1][0]]))
-                end_node_list.append(S.State(color, [coords[0][0], coords[0][1][1]]))
+                # add coords only if color is in the row
+                if len(col_index) > 1:
+                    # same row
+                    coords.append([row_index, col_index[0]])
+                    coords.append([row_index, col_index[1]])
+                elif len(col_index) == 1:
+                    # different rows, will run twice
+                    coords.append([row_index, col_index[0]])
+
+            # make states for port
+            start_node_list.append(S.State(color, coords[0]))
+            end_node_list.append(S.State(color, coords[1]))
 
         # return list of start states
         return start_node_list, end_node_list
