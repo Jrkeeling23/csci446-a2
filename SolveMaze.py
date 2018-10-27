@@ -22,10 +22,9 @@ class SolveMaze:
 
             # get list of each starting state
             # TODO once color #n is done we need to get color #n+1 from the following list
-            self.start_states = self.select_start_states()
-            self.start_state_index = 0
+            self.start_states, self.end_states = self.select_start_states()
             # set the root node to the first start state w/ no parent
-            init_node = N.Node(self.start_states[self.start_state_index], None)
+            init_node = N.Node(self.start_states[0], None)
 
             # initializes the Tree
             self.tree = T.Tree(init_node)
@@ -42,35 +41,59 @@ class SolveMaze:
         Makes a list of start states, one for each color in the order of the domain
         :return: list of start states
         """
-        init_node_list = []
-        coords = None
+        start_node_list = []
+        end_node_list = []
+        coords = []
         for color in self.domain:
             # get list of port indexes, organized by domain order
             for row in self.initMaze:
                 try:
-                    # get coordinates of the first port of this color
-                    coords = [self.initMaze.index(row), row.index(color)]
-                    break
+                    # get coordinates of the all the ports of this color in this row
+                    # coords = [self.initMaze.index(row), row.index(color)]
+                    coords.append([self.initMaze.index(row), [i for i, x in enumerate(row) if x == color]])
                 except ValueError:
-                    # wasn't in the list
+                    # wasn't in the row
                     pass
 
-            # make state for port
-            init_node_list.append(S.State(color, coords))
+            if len(coords) > 1:
+                # different rows
+                # make states for port
+                start_node_list.append(S.State(color, [coords[0][0], coords[0][1][0]]))
+                end_node_list.append(S.State(color, [coords[1][0], coords[1][1][0]]))
+            else:
+                # same row
+                # make states for port
+                start_node_list.append(S.State(color, [coords[0][0], coords[0][1][0]]))
+                end_node_list.append(S.State(color, [coords[0][0], coords[0][1][1]]))
 
         # return list of start states
-        return init_node_list
+        return start_node_list, end_node_list
 
     def next_start_state(self):
         """
         Gets the next starting state
-        :return: starting state for the next color, or False if there are no more
+        :return: starting state for the next color, or None if there are no more
         """
-        self.start_state_index += 1
-        if self.start_state_index < len(self.start_states):
-            return self.start_states[self.start_state_index]
+        return self.__gen_next_state(self.start_states)
+
+    def next_end_state(self):
+        """
+        Gets the next ending state
+        :return: ending state for the next color, or None if there are no more
+        """
+        return self.__gen_next_state(self.end_states)
+
+    def __gen_next_state(self, main_list):
+        """
+        Helper function for next state getting
+        :param main_list: list to get from
+        :return: next state, or None if there were none
+        """
+        index = self.domain.index(self.tree.current_Node.state.color) + 1
+        if index < len(main_list):
+            return main_list[index]
         else:
-            return False
+            return None
 
     def find_unique_colors(self):
         list_c = []
