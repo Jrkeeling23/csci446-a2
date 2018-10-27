@@ -115,15 +115,41 @@ class SolveMaze:
 
     # TODO: Add method for checking if a node is adjacent to others in the list not including the last 2 coords
     # entered in the list
-    def check_adj(self):
 
+    # checks for the adjacent nodes that aren't the previously visited node
+    def check_adj(self):
+        """
+        Adds valid child nodes to the current nodes
+        Valid being defined as not the previous node, and not having been visited already.
+        :return:
+        """
         compare = [[1,0],[0,-1],[-1,0],[0,1]]
 
-        # Use last x/y coords in the ColorList as the State being checked
-        # the 2nd to last x/y coord set in the Color list would need to be subtracted from the State being checked,
-        # and have the result x/y be removed from the list of x,y differences used to compare for
-        # each other node, to see if that one would evaluate to 3 adjacent nodes
-        pass
+        # Gets the Value of the current node's state color for selecting the color_list
+        current_color = self.tree.current_Node.state.color
+        color_index = self.domain.index(current_color)
+
+        # stores the cords of the current node
+        current_node_cords = self.color_lists[color_index][-1]
+        # stores the cords of the previous node
+        prev_node_cords = self.color_lists[color_index][-2]
+
+        # Computes the difference of the two positions
+        x = current_node_cords[0] - prev_node_cords[0]
+        y = current_node_cords[1] - prev_node_cords[1]
+        pos_diff = [x,y]
+
+        compare.remove(pos_diff)
+
+        # use visited bool array to see if the node we're trying to create is already made
+        for pos in compare:
+            vX = current_node_cords[0]+pos[0]
+            vY = current_node_cords[1]+pos[1]
+            # self.has_been_colored will return false if the pos hasn't been visited
+            if not self.has_been_colored[vX][vY]:
+                # Add node
+                temp = [vX,vY]
+                self.tree.current_Node.append_child(self.make_node(current_color,temp))
 
     def make_node(self, color, pos):
         node = N.Node(S.State(color, pos), self.tree.current_Node)
@@ -153,6 +179,8 @@ class SolveMaze:
         result = self.constraint_check()
         # According to constraint results, either backtrack, or forward Tree's current_Node
         if result:
+            # Expand current node by adding on children nodes
+            self.check_adj()
             # Move Tree forward
             self.tree.forward_node()
             self.add_to_trackers(self.tree.current_Node)
