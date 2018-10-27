@@ -8,6 +8,7 @@ class SolveMaze:
     def __init__(self, maze):
         if len(maze) > 0:
             self.smart = False
+            self.finished = False
             self.initMaze = maze
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -21,7 +22,6 @@ class SolveMaze:
             self.has_been_colored = [[False] * temp for i in range(temp)]
 
             # get list of each starting state
-            # TODO once color #n is done we need to get color #n+1 from the following list
             self.start_states, self.end_states = self.select_start_states()
             # set the root node to the first start state w/ no parent
             init_node = N.Node(self.start_states[0], None)
@@ -32,6 +32,10 @@ class SolveMaze:
             # lists the domain
             print("\nDomain: " + str(self.domain))
             print("Maze Sovler Initialized")
+            while not self.finished:
+                self.evaluate()
+                print("Oh no!")
+            print("We done!")
         else:
             # no maze can't do anything
             pass
@@ -137,6 +141,13 @@ class SolveMaze:
         else:
             return True
 
+    def check_end(self):
+        for row in self.has_been_colored:
+            for col in row:
+                if not col:
+                    return False
+        return True
+
     # checks for the adjacent nodes that aren't the previously visited node
     def check_adj(self):
         """
@@ -147,10 +158,13 @@ class SolveMaze:
         compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
 
         if self.tree.current_node.state.equals(self.next_end_state()):
-            # Add the next color's start node here
-            next_node = self.make_node2(self.next_end_state())
-            self.tree.current_node.append_child(next_node)
 
+            if self.check_end():
+                self.finished = True
+            else:
+                # Add the next color's start node here
+                next_node = self.make_node2(self.next_end_state())
+                self.tree.current_node.append_child(next_node)
         else:
 
             # Gets the Value of the current node's state color for selecting the color_list
