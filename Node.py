@@ -1,5 +1,7 @@
 class Node:
-
+    """
+    Node is a wrapper class for State that handles tree connectivity
+    """
     def __init__(self, state, parent):
         self.parent_Node = parent
         self.state = state

@@ -5,36 +5,38 @@ import Node as N
 
 class SolveMaze:
 
-    colorLists = []
-
     def __init__(self, maze):
-        self.initMaze = maze
-        # Make list of unique colors
-        self.domain = self.find_unique_colors()
-        # lists the domain
-        print("\nDomain: " + str(self.domain))
-        # use index of a 'COLOR' in domain to find it's numerical value
+        if len(maze) > 0:
+            self.initMaze = maze
+            # Make list of unique colors
+            # use index of a 'COLOR' in domain to find it's numerical value
+            self.domain = self.find_unique_colors()
 
-        # make empty color lists for each unique color in domain
-        for l in self.domain:
-            self.colorLists.append([])
+            # make empty color lists for each unique color in domain
+            self.color_lists = [[] for i in range(len(self.domain))]
 
-        # initializes 2D boolean array for keeping track of whether a state has been colored already or not
-        temp = len(maze[0])
-        self.hasBeenColored = [[False]*temp for j in range(temp)]
-        # TODO: add logic for keeping track of these True/False values according to color List's coords
-        # (Update when backtracking and moving forward)
+            # initializes 2D boolean array for keeping track of whether a state has been colored already or not
+            temp = len(maze[0])
+            self.has_been_colored = [[False] * temp for i in range(temp)]
+            # TODO: add logic for keeping track of these True/False values according to color List's coords
+            # (Update when backtracking and moving forward)
 
-        # get list of each starting state
-        # TODO once color #n is done we need to get color #n+1 from the following list
-        self.start_states = self.select_start_states()
-        # set the root node to the first start state w/ no parent
-        init_node = N.Node(self.start_states[0], None)
+            # get list of each starting state
+            # TODO once color #n is done we need to get color #n+1 from the following list
+            self.start_states = self.select_start_states()
+            self.start_state_index = 0
+            # set the root node to the first start state w/ no parent
+            init_node = N.Node(self.start_states[self.start_state_index], None)
 
-        # initializes the Tree
-        self.tree = T.Tree(init_node)
+            # initializes the Tree
+            self.tree = T.Tree(init_node)
 
-        print("Maze Sovler Initialized")
+            # lists the domain
+            print("\nDomain: " + str(self.domain))
+            print("Maze Sovler Initialized")
+        else:
+            # no maze can't do anything
+            pass
 
     def select_start_states(self):
         """
@@ -59,6 +61,17 @@ class SolveMaze:
 
         # return list of start states
         return init_node_list
+
+    def next_start_state(self):
+        """
+        Gets the next starting state
+        :return: starting state for the next color, or False if there are no more
+        """
+        self.start_state_index += 1
+        if self.start_state_index < len(self.start_states):
+            return self.start_states[self.start_state_index]
+        else:
+            return False
 
     def find_unique_colors(self):
         list_c = []
@@ -111,21 +124,21 @@ class SolveMaze:
         # pos should be a list of x and y ints, i.e. [x, y]
         x, y = node.state.pos
         # set the boolean array at this node's location to True
-        self.hasBeenColored[x][y] = True
+        self.has_been_colored[x][y] = True
 
         color = node.state.color
         color_val = self.domain.index(color)
         # add this node's location set to the end of its color's list
-        self.colorLists[color_val].append(node.state.pos)
+        self.color_lists[color_val].append(node.state.pos)
 
-    # Should always remove the last node from color list, and sets the hasBeenColored pos to False
+    # Should always remove the last node from color list, and sets the has_been_colored pos to False
     def remove_from_trackers(self, node):
         x, y = node.state.pos
         # set the boolean array at this node's location to False
-        self.hasBeenColored[x][y] = False
+        self.has_been_colored[x][y] = False
 
         # removes last item from the color list
         color = node.state.color
         color_val = self.domain.index(color)
         # remove last set from this color's list
-        self.colorLists[color_val].pop()
+        self.color_lists[color_val].pop()
