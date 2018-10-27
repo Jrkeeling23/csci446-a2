@@ -89,7 +89,7 @@ class SolveMaze:
         :param main_list: list to get from
         :return: next state, or None if there were none
         """
-        index = self.domain.index(self.tree.current_Node.state.color) + 1
+        index = self.domain.index(self.tree.current_node.state.color) + 1
         if index < len(main_list):
             return main_list[index]
         else:
@@ -109,13 +109,13 @@ class SolveMaze:
         :return: True if this constraint passes, False otherwise
         """
         # get index of the current color
-        i = self.domain.index(self.tree.current_Node.state.color)
+        i = self.domain.index(self.tree.current_node.state.color)
 
         # if length of the current color list is less then 4, there can't be a zig zag
         if len(self.color_lists[i]) > 4:
             # find pos of adjacent states
             compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
-            x, y = self.tree.current_Node.state.pos
+            x, y = self.tree.current_node.state.pos
             adj_nodes = [[x + dx, y + dy] for dx, dy in compare]
 
             # remove pos of the prev state
@@ -137,9 +137,6 @@ class SolveMaze:
         else:
             return True
 
-    # TODO: Add method for checking if a node is adjacent to others in the list not including the last 2 coords
-    # entered in the list
-
     # checks for the adjacent nodes that aren't the previously visited node
     def check_adj(self):
         """
@@ -147,36 +144,52 @@ class SolveMaze:
         Valid being defined as not the previous node, and not having been visited already.
         :return:
         """
-        compare = [[1,0],[0,-1],[-1,0],[0,1]]
+        compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
 
-        # Gets the Value of the current node's state color for selecting the color_list
-        current_color = self.tree.current_Node.state.color
-        color_index = self.domain.index(current_color)
+        if self.tree.current_node.state.equals(self.next_end_state()):
+            # Add the next color's start node here
+            next_node = self.make_node2(self.next_end_state())
+            self.tree.current_node.append_child(next_node)
 
-        # stores the cords of the current node
-        current_node_cords = self.color_lists[color_index][-1]
-        # stores the cords of the previous node
-        prev_node_cords = self.color_lists[color_index][-2]
+        else:
 
-        # Computes the difference of the two positions
-        x = current_node_cords[0] - prev_node_cords[0]
-        y = current_node_cords[1] - prev_node_cords[1]
-        pos_diff = [x,y]
+            # Gets the Value of the current node's state color for selecting the color_list
+            current_color = self.tree.current_node.state.color
+            color_index = self.domain.index(current_color)
 
-        compare.remove(pos_diff)
+            # stores the cords of the current node
+            current_node_cords = self.color_lists[color_index][-1]
 
-        # use visited bool array to see if the node we're trying to create is already made
-        for pos in compare:
-            vX = current_node_cords[0]+pos[0]
-            vY = current_node_cords[1]+pos[1]
-            # self.has_been_colored will return false if the pos hasn't been visited
-            if not self.has_been_colored[vX][vY]:
-                # Add node
-                temp = [vX,vY]
-                self.tree.current_Node.append_child(self.make_node(current_color,temp))
+            if not self.tree.current_node.state.equals(self.tree.root.state):
+                # stores the cords of the previous node
+                prev_node_cords = self.color_lists[color_index][-2]
+
+                # Computes the difference of the two positions
+                x = current_node_cords[0] - prev_node_cords[0]
+                y = current_node_cords[1] - prev_node_cords[1]
+                pos_diff = [x, y]
+
+                compare.remove(pos_diff)
+
+            # use visited bool array to see if the node we're trying to create is already made
+            for pos in compare:
+                v_x = current_node_cords[0]+pos[0]
+                v_y = current_node_cords[1]+pos[1]
+                # self.has_been_colored will return false if the pos hasn't been visited
+                try:
+                    if not self.has_been_colored[v_x][v_y]:
+                        # Add node
+                        temp = [v_x, v_y]
+                        self.tree.current_node.append_child(self.make_node(current_color, temp))
+                except IndexError:
+                    pass
 
     def make_node(self, color, pos):
-        node = N.Node(S.State(color, pos), self.tree.current_Node)
+        node = N.Node(S.State(color, pos), self.tree.current_node)
+        return node
+
+    def make_node2(self, state):
+        node = N.Node(state, self.tree.current_node)
         return node
 
     # TODO: Make constraints evaluations
@@ -211,9 +224,9 @@ class SolveMaze:
             self.check_adj()
             # Move Tree forward
             self.tree.forward_node()
-            self.add_to_trackers(self.tree.current_Node)
+            self.add_to_trackers(self.tree.current_node)
         else:
-            self.remove_from_trackers(self.tree.current_Node)
+            self.remove_from_trackers(self.tree.current_node)
             self.tree.backtrack_node()
 
     # Trackers are the 2D boolean array & color list
