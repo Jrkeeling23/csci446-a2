@@ -13,5 +13,6 @@ class Node:
     def append_child(self, node):
         self.children.append(node)
 
-    def remove_child(self, node):
-        self.remove_child(node)
+    def remove_current_child(self):
+        if len(self.children) > 0:
+            self.children.pop(0)

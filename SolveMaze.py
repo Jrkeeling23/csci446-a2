@@ -23,6 +23,12 @@ class SolveMaze:
 
             # get list of each starting state
             self.start_states, self.end_states = self.select_start_states()
+
+            # update has been colored for all port states
+            for state in self.start_states + self.end_states:
+                x, y = state.pos
+                self.has_been_colored[x][y] = True
+
             # set the root node to the first start state w/ no parent
             init_node = N.Node(self.start_states[0], None)
 
@@ -30,6 +36,18 @@ class SolveMaze:
             self.tree = T.Tree(init_node)
             # initialize trackers
             self.add_to_trackers(self.tree.current_node)
+
+            # clear vars we are done with, so they are not in the debugger for the following while loop
+            x = None
+            del x
+            y = None
+            del y
+            state = None
+            del state
+            init_node = None
+            del init_node
+            temp = None
+            del temp
 
             # lists the domain
             print("\nDomain: " + str(self.domain))
@@ -49,8 +67,8 @@ class SolveMaze:
         """
         start_node_list = []
         end_node_list = []
-        coords = []
         for color in self.domain:
+            coords = []
             # get list of port indexes, organized by domain order
             for row in self.initMaze:
                 # get coordinates of the all the ports of this color in this row
@@ -119,7 +137,7 @@ class SolveMaze:
         # if length of the current color list is less then 4, there can't be a zig zag
         if len(self.color_lists[i]) > 4:
             # find pos of adjacent states
-            compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+            compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
             x, y = self.tree.current_node.state.pos
             adj_nodes = [[x + dx, y + dy] for dx, dy in compare]
 
@@ -156,16 +174,15 @@ class SolveMaze:
         Valid being defined as not the previous node, and not having been visited already.
         :return:
         """
-        compare = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+        compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
         if self.tree.current_node.state.equals(self.next_end_state()):
 
             if self.check_end():
                 self.finished = True
             else:
-                # Add the next color's start node here
-                next_node = self.make_node2(self.next_end_state())
-                self.tree.current_node.append_child(next_node)
+                # Add the next color's start node here, this also appends as a child of the current node
+                self.make_node2(self.next_end_state())
         else:
 
             # Gets the Value of the current node's state color for selecting the color_list
@@ -180,8 +197,8 @@ class SolveMaze:
                 prev_node_cords = self.color_lists[color_index][-2]
 
                 # Computes the difference of the two positions
-                x = current_node_cords[0] - prev_node_cords[0]
-                y = current_node_cords[1] - prev_node_cords[1]
+                x = prev_node_cords[0] - current_node_cords[0]
+                y = prev_node_cords[1] - current_node_cords[1]
                 pos_diff = [x, y]
 
                 compare.remove(pos_diff)
@@ -192,10 +209,13 @@ class SolveMaze:
                 v_y = current_node_cords[1]+pos[1]
                 # self.has_been_colored will return false if the pos hasn't been visited
                 try:
+                    if v_x < 0 or v_y < 0:
+                        raise IndexError
                     if not self.has_been_colored[v_x][v_y]:
                         # Add node
                         temp = [v_x, v_y]
-                        self.tree.current_node.append_child(self.make_node(current_color, temp))
+                        # this also appends as a child of the current node
+                        self.make_node(current_color, temp)
                 except IndexError:
                     pass
 
@@ -242,6 +262,8 @@ class SolveMaze:
             self.add_to_trackers(self.tree.current_node)
         else:
             self.remove_from_trackers(self.tree.current_node)
+            # remove the current node from its parent's valid options
+            self.tree.current_node.parent_Node.remove_current_child()
             self.tree.backtrack_node()
 
     # Trackers are the 2D boolean array & color list
