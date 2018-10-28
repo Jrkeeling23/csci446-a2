@@ -16,7 +16,6 @@ class Tree:
 
     # Should never be reached if current_Node has no children
     def forward_node(self):
-        # TODO this only check the fist child node, so the first node must always be the next state
         self.current_node = self.current_node.children[0]
         self.depth += 1
 

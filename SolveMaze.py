@@ -10,6 +10,7 @@ class SolveMaze:
             self.smart = False
             self.finished = False
             self.initMaze = maze
+
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
             self.domain = self.find_unique_colors()
@@ -20,6 +21,8 @@ class SolveMaze:
             # initializes 2D boolean array for keeping track of whether a state has been colored already or not
             temp = len(maze[0])
             self.has_been_colored = [[False] * temp for i in range(temp)]
+            # set up answer array
+            self.answer = [[" "] * temp for i in range(temp)]
 
             # get list of each starting state
             self.start_states, self.end_states = self.select_start_states()
@@ -54,10 +57,17 @@ class SolveMaze:
             print("Maze Sovler Initialized")
             while not self.finished:
                 self.evaluate()
-            print("We done!")
-            print(self.has_been_colored)
+
+            # build and print the answer
+            for color in self.color_lists:
+                for pos in color:
+                    self.answer[pos[0]][pos[1]] = self.domain[self.color_lists.index(color)]
+            for row in self.answer:
+                for col in row:
+                    print(col, end=" ")
+                print()
         else:
-            # no maze can't do anything
+            # no maze, can't do anything
             pass
 
     def select_start_states(self):
@@ -99,7 +109,7 @@ class SolveMaze:
         """
         return self.__gen_next_state(self.start_states, 1)
 
-    def next_end_state(self):
+    def current_end_state(self):
         """
         Gets the next ending state
         :return: ending state for the next color, or None if there are no more
@@ -176,13 +186,15 @@ class SolveMaze:
         """
         compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
-        if self.tree.current_node.state.equals(self.next_end_state()):
+        if self.tree.current_node.state.equals(self.current_end_state()):
 
             if self.check_end():
                 self.finished = True
+                # still need to append the last color though
+
             else:
                 # Add the next color's start node here, this also appends as a child of the current node
-                self.make_node2(self.next_end_state())
+                self.make_node2(self.next_start_state())
         else:
 
             # Gets the Value of the current node's state color for selecting the color_list
@@ -192,7 +204,15 @@ class SolveMaze:
             # stores the cords of the current node
             current_node_cords = self.color_lists[color_index][-1]
 
-            if not self.tree.current_node.state.equals(self.tree.root.state):
+            # for a start port don't remove previous node's pos from the check,
+            # since it is ether None or a different color
+            is_start_port = False
+            for state in self.start_states:
+                if self.tree.current_node.state.equals(state):
+                    is_start_port = True
+                    break
+
+            if not is_start_port:
                 # stores the cords of the previous node
                 prev_node_cords = self.color_lists[color_index][-2]
 
@@ -212,7 +232,7 @@ class SolveMaze:
                     if v_x < 0 or v_y < 0:
                         raise IndexError
                     # allow the end state for this color to be added anyway
-                    if not self.has_been_colored[v_x][v_y] or self.next_end_state().pos == [v_x, v_y]:
+                    if not self.has_been_colored[v_x][v_y] or self.current_end_state().pos == [v_x, v_y]:
                         # Add node
                         temp = [v_x, v_y]
                         # this also appends as a child of the current node
@@ -274,7 +294,12 @@ class SolveMaze:
                 self.tree.current_node.state.expanded = True
                 # Expand current node by adding on children nodes
                 self.check_adj()
-                forward()
+                if len(self.tree.current_node.children) > 0:
+                    forward()
+                else:
+                    # no options after check_adj, so we need to backtrack unless we are finished
+                    if not self.finished:
+                        backtrack()
             else:
                 backtrack()
         else:
@@ -298,12 +323,22 @@ class SolveMaze:
 
     # Should always remove the last node from color list, and sets the has_been_colored pos to False
     def remove_from_trackers(self, node):
-        x, y = node.state.pos
-        # set the boolean array at this node's location to False
-        self.has_been_colored[x][y] = False
+        is_port = False
+        for port in self.start_states + self.end_states:
+            if node.state.equals(port):
+                is_port = True
+                break
+
+        color = node.state.color
+        # don't set a port's has_been_colored to False
+        if not is_port:
+            x, y = node.state.pos
+            # set the boolean array at this node's location to False
+            self.has_been_colored[x][y] = False
+        else:
+            # not important for non-port nodes since they are regenerated
+            self.tree.current_node.state.expanded = False
 
         # removes last item from the color list
-        color = node.state.color
         color_val = self.domain.index(color)
-        # remove last set from this color's list
         self.color_lists[color_val].pop()
