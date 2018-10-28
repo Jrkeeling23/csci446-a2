@@ -54,8 +54,8 @@ class SolveMaze:
             print("Maze Sovler Initialized")
             while not self.finished:
                 self.evaluate()
-                print("Oh no!")
             print("We done!")
+            print(self.has_been_colored)
         else:
             # no maze can't do anything
             pass
@@ -97,22 +97,22 @@ class SolveMaze:
         Gets the next starting state
         :return: starting state for the next color, or None if there are no more
         """
-        return self.__gen_next_state(self.start_states)
+        return self.__gen_next_state(self.start_states, 1)
 
     def next_end_state(self):
         """
         Gets the next ending state
         :return: ending state for the next color, or None if there are no more
         """
-        return self.__gen_next_state(self.end_states)
+        return self.__gen_next_state(self.end_states, 0)
 
-    def __gen_next_state(self, main_list):
+    def __gen_next_state(self, main_list, delta):
         """
         Helper function for next state getting
         :param main_list: list to get from
         :return: next state, or None if there were none
         """
-        index = self.domain.index(self.tree.current_node.state.color) + 1
+        index = self.domain.index(self.tree.current_node.state.color) + delta
         if index < len(main_list):
             return main_list[index]
         else:
@@ -135,7 +135,7 @@ class SolveMaze:
         i = self.domain.index(self.tree.current_node.state.color)
 
         # if length of the current color list is less then 4, there can't be a zig zag
-        if len(self.color_lists[i]) > 4:
+        if len(self.color_lists[i]) >= 4:
             # find pos of adjacent states
             compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
             x, y = self.tree.current_node.state.pos
@@ -211,7 +211,8 @@ class SolveMaze:
                 try:
                     if v_x < 0 or v_y < 0:
                         raise IndexError
-                    if not self.has_been_colored[v_x][v_y]:
+                    # allow the end state for this color to be added anyway
+                    if not self.has_been_colored[v_x][v_y] or self.next_end_state().pos == [v_x, v_y]:
                         # Add node
                         temp = [v_x, v_y]
                         # this also appends as a child of the current node
@@ -251,20 +252,37 @@ class SolveMaze:
         Evaluates the position and ether moves forward or backtracks in the tree
         :return: Nothing
         """
-        # Check constraints for Tree's current_Node
-        result = self.constraint_check()
-        # According to constraint results, either backtrack, or forward Tree's current_Node
-        if result:
-            # Expand current node by adding on children nodes
-            self.check_adj()
-            # Move Tree forward
-            self.tree.forward_node()
-            self.add_to_trackers(self.tree.current_node)
-        else:
+        def backtrack():
+            # Move Tree backward
             self.remove_from_trackers(self.tree.current_node)
             # remove the current node from its parent's valid options
             self.tree.current_node.parent_Node.remove_current_child()
             self.tree.backtrack_node()
+
+        def forward():
+            # Move Tree forward
+            self.tree.forward_node()
+            self.add_to_trackers(self.tree.current_node)
+
+        if not self.tree.current_node.state.expanded:
+            # Check constraints for Tree's current_Node
+            result = self.constraint_check()
+
+            # According to constraint results, either backtrack, or forward Tree's current_Node
+            if result:
+                # set this node to expanded before moving to the next
+                self.tree.current_node.state.expanded = True
+                # Expand current node by adding on children nodes
+                self.check_adj()
+                forward()
+            else:
+                backtrack()
+        else:
+            if len(self.tree.current_node.children) > 0:
+                forward()
+            else:
+                backtrack()
+
 
     # Trackers are the 2D boolean array & color list
     def add_to_trackers(self, node):

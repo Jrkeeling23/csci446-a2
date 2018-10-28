@@ -9,6 +9,7 @@ class State:
         self.color = color
         # position of this state
         self.pos = pos
+        self.expanded = False
 
     def equals(self, state):
         """
