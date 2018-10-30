@@ -52,9 +52,9 @@ def read_in_maze(string):
     elif string == '14':
         __build_maze("assignment-resources/14x14maze.txt")
     else:
-        print("Maze not found")
+        __build_maze(string)
 
-    print_maze(maze_xy)
+    #print_maze(maze_xy)
     return maze_xy
 
 # "Global" variables
@@ -76,8 +76,8 @@ while running:
         index += 1
     # normal input
     else:
-        inp = "" + input("Enter the maze size you would like to run, or enter an option:\n"
-                         "Enter N where N is the size of the maze, "
+        inp = "" + input("Enter the maze file you want to run, or enter an option to run a pre-configured maze:\n"
+                         "Enter N where N is the 5, 7, 8, 9, 10, 12, or 14, "
                          "Enter A to start automatic running, "
                          "or Enter Q to quit:\n")
     # always do this stuff

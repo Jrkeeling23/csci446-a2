@@ -1,12 +1,14 @@
 import Tree as T
 import State as S
 import Node as N
+import time
 
 
 class SolveMaze:
 
     def __init__(self, maze):
         if len(maze) > 0:
+            self.vars_assigned = 0
             self.smart = False
             self.finished = False
             self.initMaze = maze
@@ -54,9 +56,12 @@ class SolveMaze:
 
             # lists the domain
             print("\nDomain: " + str(self.domain))
-            print("Maze Sovler Initialized")
+            print("Maze Solver Initialized")
+            start_time = time.process_time()
             while not self.finished:
                 self.evaluate()
+            end_time = time.process_time()
+            run_time = end_time - start_time
 
             # build and print the answer
             for color in self.color_lists:
@@ -66,6 +71,8 @@ class SolveMaze:
                 for col in row:
                     print(col, end=" ")
                 print()
+            print("Number of attempted variable assignments:", self.vars_assigned)
+            print("Run time: %.5f seconds" % run_time)
         else:
             # no maze, can't do anything
             pass
@@ -315,6 +322,8 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
+        # increment number of attempted variable assignments count
+        self.vars_assigned += 1
 
         color = node.state.color
         color_val = self.domain.index(color)
