@@ -84,6 +84,7 @@ class SolveMaze:
         """
         start_node_list = []
         end_node_list = []
+
         for color in self.domain:
             coords = []
             # get list of port indexes, organized by domain order
@@ -106,8 +107,74 @@ class SolveMaze:
             start_node_list.append(S.State(color, coords[0]))
             end_node_list.append(S.State(color, coords[1]))
 
+        if self.smart:
+            smart_start_list = self.smart_start(start_node_list, end_node_list)
+            
         # return list of start states
         return start_node_list, end_node_list
+
+    def smart_start(self, start_list, end_list):
+        start_path_number = []
+        end_path_number = []
+        # check surrounding
+        for i in [len(start_list)]:
+            # obtain possible moves for each color
+            start_path_number.append(self.find_available_paths(start_list[i], size=len(start_list)))
+            end_path_number.append(self.find_available_paths(end_list[i], size=len(end_list)))
+
+        # lowest summed path and integer to use correct domain
+        lowest = [[start_path_number[0] + end_path_number[0], 0]]
+        # add path values to find most constrained value
+        for i in [len(start_list)]:
+            temp = start_path_number[i] + end_path_number[i]
+            # if temp is less than, set lowest accordingly
+            if lowest[0][0] > temp:
+                lowest = [[start_path_number[i] + end_path_number[i], i]]
+        # TODO: return a usable value to use as starting node.
+
+
+
+
+    def find_available_paths(self, node, size):
+        coords = node.coords
+        # first value in coordinate
+        coord1 = node.coords[0][0]
+        # second value in coordinate
+        coord2 = node.coords[0][1]
+        # counts number of available paths
+        path = 0
+        # temp value to check
+        temp = None
+
+        # at top edge
+        if coords[0][0] != 0:
+            # check up
+            temp = coord1 -1
+            # checks if it is not assigned a color
+            if self.initMaze[temp][coord2] is '_':
+                path +=1
+        # at left edge
+        elif coords[0][1] != 0:
+            # check left
+            temp = coord2 - 1
+            if self.initMaze[0][temp] is '_':
+                path += 1
+        # at bottom edge
+        elif coords[0][0] != size/2-1:
+            # check down
+            temp = coord1 + 1
+            if self.initMaze[temp][0] is '_':
+                path += 1
+        # at right edge
+        elif coords[0][1] != size/2-1:
+            # check right
+            temp = coord2 + 1
+            if self.initMaze[0][temp] is '_':
+                path += 1
+        # return total number of available paths
+        return path
+
+
 
     def next_start_state(self):
         """
@@ -139,7 +206,7 @@ class SolveMaze:
         list_c = []
         for x in self.initMaze:
             for y in x:
-                if(not list_c.__contains__(y))and (y != '_'):
+                if (not list_c.__contains__(y)) and (y != '_'):
                     list_c.append(y)
         return list_c
 
@@ -232,8 +299,8 @@ class SolveMaze:
 
             # use visited bool array to see if the node we're trying to create is already made
             for pos in compare:
-                v_x = current_node_cords[0]+pos[0]
-                v_y = current_node_cords[1]+pos[1]
+                v_x = current_node_cords[0] + pos[0]
+                v_y = current_node_cords[1] + pos[1]
                 # self.has_been_colored will return false if the pos hasn't been visited
                 try:
                     if v_x < 0 or v_y < 0:
@@ -262,23 +329,25 @@ class SolveMaze:
         evaluates on Tree's current_Node
         :return: True if all test passed, False otherwise
         """
+        if self.smart:
+            # TODO add extra smart checks here
+
+            pass
+
         # No zig zags
         if not self.check_zigzag():
             # zigzag constraint failed
             return False
-
-        if self.smart:
-            # TODO add extra smart checks here
-            pass
 
         # all tests passed
         return True
 
     def evaluate(self):
         """
-        Evaluates the position and ether moves forward or backtracks in the tree
+        Evaluates the position and either moves forward or backtracks in the tree
         :return: Nothing
         """
+
         def backtrack():
             # Move Tree backward
             self.remove_from_trackers(self.tree.current_node)
@@ -314,7 +383,6 @@ class SolveMaze:
                 forward()
             else:
                 backtrack()
-
 
     # Trackers are the 2D boolean array & color list
     def add_to_trackers(self, node):
