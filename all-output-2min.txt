@@ -8,7 +8,7 @@ B R Y O O
 B R O O G 
 B B G G G 
 Number of attempted variable assignments: 52
-Run time: 0.00296 seconds
+Run time: 0.00326 seconds
 
 Automatic running enabled:  7
 
@@ -21,8 +21,8 @@ G Y Y Y R Y O
 G Y R R R Y O 
 G Y R Y Y Y O 
 G Y Y Y O O O 
-Number of attempted variable assignments: 26583
-Run time: 1.22710 seconds
+Number of attempted variable assignments: 16554
+Run time: 0.75522 seconds
 
 Automatic running enabled:  8
 
@@ -36,8 +36,8 @@ Y B O O O O Y Y
 Y B B B B O Q Y 
 Y Q Q Q Q Q Q Y 
 Y Y Y Y Y Y Y Y 
-Number of attempted variable assignments: 142816
-Run time: 7.28657 seconds
+Number of attempted variable assignments: 65701
+Run time: 3.17748 seconds
 
 Automatic running enabled:  9
 
@@ -52,8 +52,8 @@ G K K P P P P P G
 G K Y Y Y Y Y P G 
 G K K K K K K P G 
 G G G G G G G G G 
-Number of attempted variable assignments: 355695
-Run time: 18.99597 seconds
+Number of attempted variable assignments: 243191
+Run time: 12.75442 seconds
 
 Automatic running enabled:  10
 
@@ -62,16 +62,16 @@ Maze Solver Initialized
 Process aborted after 2 minutes
 R   R R R R R R R R 
 R R R             R 
-                  R 
-R R R R R     R R R 
-R       R     R     
-R R R R R     R R   
-  R R           R   
-    R       R R R   
-    R R     R       
-      R R R R       
-Number of attempted variable assignments: 2347618
-Run time: 120.00003 seconds
+          R R R   R 
+R R R R R R       R 
+R                 R 
+R               R R 
+R R R R       R R   
+      R R R R R     
+                    
+                    
+Number of attempted variable assignments: 2296207
+Run time: 120.00002 seconds
 
 Automatic running enabled:  12
 
@@ -80,18 +80,18 @@ Maze Solver Initialized
 Process aborted after 2 minutes
 K K K K K K K K K K K K 
 K                     K 
-K K K K K K         K K 
-                K K K   
-                K       
-K K             K K K   
-K                   K K 
-K                     K 
-K K K K K K           K 
-          K K         K 
-            K         K 
-            K K K K K K 
-Number of attempted variable assignments: 1803251
-Run time: 120.00007 seconds
+K K K K K K Y Y G G K K 
+      Y Y Y Y G G K K   
+O O   P P       K K Q Q 
+O       P O     K     Q 
+O O O   P O     K     Q 
+    O O   O           Q 
+Q     O O O           Q 
+Q         Q Q Q       Q 
+Q Q Q     Q   Q Q     Q 
+    Q Q Q Q     Q Q Q Q 
+Number of attempted variable assignments: 2027876
+Run time: 120.00003 seconds
 
 Automatic running enabled:  14
 
@@ -106,14 +106,14 @@ B B B B B B B
 B                   B B B B 
 B B B B B B B B B   B     B 
                 B B B   B B 
-B B B B B             B B   
-B       B     B B B B B     
-B B     B     B         B   
-  B     B B B B         B   
-  B             B B B B B   
-  B B B B B B B B           
-Number of attempted variable assignments: 1731598
-Run time: 120.00001 seconds
+  B B B B             B B   
+B B     B     B B B B B     
+B       B     B             
+B       B B B B     B       
+B B B               B       
+    B B B B B B B B B       
+Number of attempted variable assignments: 1740716
+Run time: 120.00003 seconds
 
 Automatic running enabled:  Q
 

@@ -77,10 +77,12 @@ class SolveMaze:
                     print("Process aborted after 2 minutes")
                     break
 
+            # export solution png
+            self.export_png("sol" + str(len(self.initMaze)))
             # build the gif
             if self.make_gif:
                 size = len(self.initMaze)
-                GifMaker.GifMaker.make_gif("maze_animation_" + str(size) + "X" + str(size), size)
+                GifMaker.GifMaker.make_gif("maze_animation_s_" + str(size) + "X" + str(size), size)
 
             # build and print the answer
             for color in self.color_lists:

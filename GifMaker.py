@@ -105,8 +105,14 @@ class GifMaker:
 
     @staticmethod
     def make_gif(name, maze_num):
+        # get entire contents of the directory
         filenames = os.listdir("png-list")
-        filenames.remove(".DS_Store")
+
+        # don't include non-relevant files
+        for file in filenames.copy():
+            if not re.match(r"maze" + str(maze_num) + "_" + "(.*).png", file):
+                filenames.remove(file)
+
         # sort on the frame number
         filenames.sort(key=lambda x: int(re.search("maze" + str(maze_num) + "_" + "(.*).png", x).group(1)))
         with imageio.get_writer(name + ".gif", mode='I') as writer:
