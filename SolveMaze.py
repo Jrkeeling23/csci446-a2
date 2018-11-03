@@ -10,7 +10,7 @@ class SolveMaze:
     def __init__(self, maze):
         if len(maze) > 0:
             self.vars_assigned = 0
-            self.smart = False
+            self.smart = True
             self.finished = False
             self.initMaze = maze
             self.make_gif = True
@@ -146,73 +146,89 @@ class SolveMaze:
             end_node_list.append(S.State(color, coords[1]))
 
         if self.smart:
-            smart_start_list = self.smart_start(start_node_list, end_node_list)
-            
-        # return list of start states
-        return start_node_list, end_node_list
+            smart_start_list, smart_end_list = self.smart_start(start_node_list, end_node_list)
+            return smart_start_list, smart_end_list
+        else:
+            # return list of start states
+            return start_node_list, end_node_list
 
     def smart_start(self, start_list, end_list):
+        """
+        Makes two lists for smarter start domain
+        :param start_list:
+        :param end_list:
+        :return: start and end list sorted by available paths
+        """
         start_path_number = []
         end_path_number = []
+        smart_start_list = []
+        new_start_list = []
+        new_end_list = []
         # check surrounding
-        for i in [len(start_list)]:
+        for i in range(len(start_list)):
             # obtain possible moves for each color
             start_path_number.append(self.find_available_paths(start_list[i], size=len(start_list)))
             end_path_number.append(self.find_available_paths(end_list[i], size=len(end_list)))
-
-        # lowest summed path and integer to use correct domain
-        lowest = [[start_path_number[0] + end_path_number[0], 0]]
         # add path values to find most constrained value
-        for i in [len(start_list)]:
-            temp = start_path_number[i] + end_path_number[i]
-            # if temp is less than, set lowest accordingly
-            if lowest[0][0] > temp:
-                lowest = [[start_path_number[i] + end_path_number[i], i]]
-        # TODO: return a usable value to use as starting node.
-
-
-
+        for i in range(len(start_list)):
+            # variable that holds summed available paths of start and end nodes, as well as color index
+            lowest = [[start_path_number[i] + end_path_number[i], i]]
+            smart_start_list.append(lowest)
+        # creates a list from least to greatest of available paths
+        smart_start_list.sort(key=lambda x: x[0])
+        for i in range(len(start_list)):
+            # iterates through smart_start to obtain domain
+            index_color = smart_start_list[i][1]
+            # orders start_list according to least available paths
+            new_start_list.append(start_list[index_color])
+            # orders start_list according to least available paths
+            new_end_list.append(end_list[index_color])
+        return new_start_list, new_end_list
 
     def find_available_paths(self, node, size):
-        coords = node.coords
+        """
+        Finds available paths for a node
+        :param node:
+        :param size:
+        :return: returns available paths for a node
+        """
+        coords = node.pos
         # first value in coordinate
-        coord1 = node.coords[0][0]
+        coord1 = node.pos[0]
         # second value in coordinate
-        coord2 = node.coords[0][1]
+        coord2 = node.pos[1]
         # counts number of available paths
         path = 0
         # temp value to check
         temp = None
 
         # at top edge
-        if coords[0][0] != 0:
+        if coords[0] != 0:
             # check up
-            temp = coord1 -1
+            temp = coord1 - 1
             # checks if it is not assigned a color
-            if self.initMaze[temp][coord2] is '_':
-                path +=1
+            if not self.has_been_colored[temp][coord2]:
+                path += 1
         # at left edge
-        elif coords[0][1] != 0:
+        elif coords[1] != 0:
             # check left
             temp = coord2 - 1
-            if self.initMaze[0][temp] is '_':
+            if not self.has_been_colored[0][temp]:
                 path += 1
         # at bottom edge
-        elif coords[0][0] != size/2-1:
+        elif coords[0] != size / 2 - 1:
             # check down
             temp = coord1 + 1
-            if self.initMaze[temp][0] is '_':
+            if not self.has_been_colored[temp][0]:
                 path += 1
         # at right edge
-        elif coords[0][1] != size/2-1:
+        elif coords[1] != size / 2 - 1:
             # check right
             temp = coord2 + 1
-            if self.initMaze[0][temp] is '_':
+            if not self.has_been_colored[0][temp]:
                 path += 1
         # return total number of available paths
         return path
-
-
 
     def next_start_state(self):
         """
