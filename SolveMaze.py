@@ -2,6 +2,7 @@ import Tree as T
 import State as S
 import Node as N
 import time
+import GifMaker
 
 
 class SolveMaze:
@@ -12,6 +13,7 @@ class SolveMaze:
             self.smart = False
             self.finished = False
             self.initMaze = maze
+            self.make_gif = False
 
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -54,14 +56,31 @@ class SolveMaze:
             temp = None
             del temp
 
+            # build the global color rgb reference
+            self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
+            self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
+                            [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
+
             # lists the domain
             print("\nDomain: " + str(self.domain))
             print("Maze Solver Initialized")
-            start_time = time.process_time()
+
+            run_time = 0
             while not self.finished:
+                start_time = time.process_time()
                 self.evaluate()
-            end_time = time.process_time()
-            run_time = end_time - start_time
+                if self.make_gif:
+                    self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
+                end_time = time.process_time()
+                run_time += end_time - start_time
+                if not self.make_gif and run_time >= 120:
+                    print("Process aborted after 2 minutes")
+                    break
+
+            # build the gif
+            if self.make_gif:
+                size = len(self.initMaze)
+                GifMaker.GifMaker.make_gif("maze_animation_" + str(size) + "X" + str(size), size)
 
             # build and print the answer
             for color in self.color_lists:
@@ -72,10 +91,26 @@ class SolveMaze:
                     print(col, end=" ")
                 print()
             print("Number of attempted variable assignments:", self.vars_assigned)
-            print("Run time: %.5f seconds" % run_time)
+            print("Run time: %.5f seconds\n" % run_time)
         else:
             # no maze, can't do anything
             pass
+
+    def export_png(self, name):
+        """
+        Builds and exports a png from the current state of the maze
+        :param name: of the png image
+        :return: Nothing
+        """
+        # make a copy of the initial maze
+        png_maze = [row.copy() for row in self.initMaze]
+        # build the current array
+        for color in self.color_lists:
+            for pos in color:
+                png_maze[pos[0]][pos[1]] = self.domain[self.color_lists.index(color)]
+
+        # build and export png
+        GifMaker.GifMaker.make_png_from_maze(png_maze, self.index_ref, self.rgb_ref, name)
 
     def select_start_states(self):
         """

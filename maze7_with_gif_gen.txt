@@ -1,0 +1,11 @@
+Domain: ['O', 'B', 'G', 'Y', 'R']
+Maze Solver Initialized
+G G G O O O O 
+G B G G G Y O 
+G B B B R Y O 
+G Y Y Y R Y O 
+G Y R R R Y O 
+G Y R Y Y Y O 
+G Y Y Y O O O 
+Number of attempted variable assignments: 26583
+Run time: 1178.89061 seconds

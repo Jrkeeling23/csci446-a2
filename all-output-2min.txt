@@ -1,0 +1,120 @@
+Automatic running enabled:  5
+
+Domain: ['B', 'R', 'O', 'Y', 'G']
+Maze Solver Initialized
+B R R R O 
+B R Y Y O 
+B R Y O O 
+B R O O G 
+B B G G G 
+Number of attempted variable assignments: 52
+Run time: 0.00296 seconds
+
+Automatic running enabled:  7
+
+Domain: ['O', 'B', 'G', 'Y', 'R']
+Maze Solver Initialized
+G G G O O O O 
+G B G G G Y O 
+G B B B R Y O 
+G Y Y Y R Y O 
+G Y R R R Y O 
+G Y R Y Y Y O 
+G Y Y Y O O O 
+Number of attempted variable assignments: 26583
+Run time: 1.22710 seconds
+
+Automatic running enabled:  8
+
+Domain: ['R', 'G', 'B', 'Y', 'P', 'O', 'Q']
+Maze Solver Initialized
+Y Y Y R R R G G 
+Y B Y P P R R G 
+Y B O O P G R G 
+Y B O P P G G G 
+Y B O O O O Y Y 
+Y B B B B O Q Y 
+Y Q Q Q Q Q Q Y 
+Y Y Y Y Y Y Y Y 
+Number of attempted variable assignments: 142816
+Run time: 7.28657 seconds
+
+Automatic running enabled:  9
+
+Domain: ['D', 'B', 'O', 'K', 'R', 'Q', 'G', 'P', 'Y']
+Maze Solver Initialized
+D B B B O K K K K 
+D B O O O R R R K 
+D B R Q Q Q Q R K 
+D B R R R R R R K 
+G G K K K K K K K 
+G K K P P P P P G 
+G K Y Y Y Y Y P G 
+G K K K K K K P G 
+G G G G G G G G G 
+Number of attempted variable assignments: 355695
+Run time: 18.99597 seconds
+
+Automatic running enabled:  10
+
+Domain: ['R', 'G', 'O', 'Y', 'P', 'Q', 'B']
+Maze Solver Initialized
+Process aborted after 2 minutes
+R   R R R R R R R R 
+R R R             R 
+                  R 
+R R R R R     R R R 
+R       R     R     
+R R R R R     R R   
+  R R           R   
+    R       R R R   
+    R R     R       
+      R R R R       
+Number of attempted variable assignments: 2347618
+Run time: 120.00003 seconds
+
+Automatic running enabled:  12
+
+Domain: ['K', 'Y', 'G', 'O', 'P', 'Q', 'R', 'A', 'D', 'W', 'B']
+Maze Solver Initialized
+Process aborted after 2 minutes
+K K K K K K K K K K K K 
+K                     K 
+K K K K K K         K K 
+                K K K   
+                K       
+K K             K K K   
+K                   K K 
+K                     K 
+K K K K K K           K 
+          K K         K 
+            K         K 
+            K K K K K K 
+Number of attempted variable assignments: 1803251
+Run time: 120.00007 seconds
+
+Automatic running enabled:  14
+
+Domain: ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
+Maze Solver Initialized
+Process aborted after 2 minutes
+  B B B B B B B B B B B B B 
+  B                       B 
+              B B B       B 
+            B B   B B B B B 
+B B B B B B B               
+B                   B B B B 
+B B B B B B B B B   B     B 
+                B B B   B B 
+B B B B B             B B   
+B       B     B B B B B     
+B B     B     B         B   
+  B     B B B B         B   
+  B             B B B B B   
+  B B B B B B B B           
+Number of attempted variable assignments: 1731598
+Run time: 120.00001 seconds
+
+Automatic running enabled:  Q
+
+Process finished with exit code 0
