@@ -7,13 +7,13 @@ import GifMaker
 
 class SolveMaze:
 
-    def __init__(self, maze):
+    def __init__(self, maze, smart, make_gif):
         if len(maze) > 0:
             self.vars_assigned = 0
-            self.smart = True
+            self.smart = smart
             self.finished = False
             self.initMaze = maze
-            self.make_gif = True
+            self.make_gif = make_gif
             self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
             # Make list of unique colors

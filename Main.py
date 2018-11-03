@@ -1,11 +1,11 @@
 """
 Authors: George Engel, Cory Johns, Justin Keeling 
 """
-
 import SolveMaze as SM
 
+
 def read_in_maze(string):
-    global running, auto_run
+    global running, auto_run, smart, gif_gen
 
     def __build_maze(file):
         """
@@ -37,6 +37,15 @@ def read_in_maze(string):
         running = False
     elif string == "A" or string == "a":
         auto_run = True
+    elif string == "S" or string == "s":
+        smart = not smart
+        print("Now using %s implementation\n" % ("Smart" if smart else "Dumb"))
+    elif string == "G" or string == "g":
+        gif_gen = not gif_gen
+        print("Now generating GIFs while solving,"
+              "\nWarning!! run time / memory space can become excessive"
+              " - Not recommended with variable assignments in excess of 25000\n"
+              if gif_gen else "GIF generation disabled\n")
     elif string == '5':
         __build_maze("assignment-resources/5x5maze.txt")
     elif string == '7':
@@ -54,16 +63,19 @@ def read_in_maze(string):
     else:
         __build_maze(string)
 
-    #print_maze(maze_xy)
     return maze_xy
+
 
 # "Global" variables
 running = True
 auto_run = False
+smart = False
+gif_gen = False
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
-input_list = ["5", "7", "8", "9", "10", "12", "14", "Q"]
+input_list = ["5", "7", "8", "9", "10", "12", "14",
+              "s", "5", "7", "8", "9", "10", "12", "14", "Q"]
 # index for auto run
 index = 0
 
@@ -76,11 +88,12 @@ while running:
         index += 1
     # normal input
     else:
-        inp = "" + input("Enter the maze file you want to run, or enter an option to run a pre-configured maze:\n"
-                         "Enter N where N is the 5, 7, 8, 9, 10, 12, or 14, "
-                         "Enter A to start automatic running, "
-                         "or Enter Q to quit:\n")
+        inp = "" + input("Enter the maze file you want to run, or enter an option:\n"
+                         "Options: 5, 7, 8, 9, 10, 12, or 14 to run the corresponding maze, "
+                         "\nA to start automatic running,\nS to toggle smart/dumb implementation,"
+                         "\nG to generate GIF animations of the solving process, "
+                         "\nor Q to quit:\n")
     # always do this stuff
-    #init new solvemaze here and input 2D list returned by readinmaze
-    solve = SM.SolveMaze(read_in_maze(inp))
+    # init new SolveMaze here and input 2D list returned by read_in_maze
+    solve = SM.SolveMaze(read_in_maze(inp), smart, gif_gen)
 output_file.close()
