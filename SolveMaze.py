@@ -13,7 +13,8 @@ class SolveMaze:
             self.smart = False
             self.finished = False
             self.initMaze = maze
-            self.make_gif = False
+            self.make_gif = True
+            self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -258,9 +259,8 @@ class SolveMaze:
         # if length of the current color list is less then 4, there can't be a zig zag
         if len(self.color_lists[i]) >= 4:
             # find pos of adjacent states
-            compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
             x, y = self.tree.current_node.state.pos
-            adj_nodes = [[x + dx, y + dy] for dx, dy in compare]
+            adj_nodes = [[x + dx, y + dy] for dx, dy in self.compare]
 
             # remove pos of the prev state
             prev = self.color_lists[i][-2]
@@ -295,7 +295,7 @@ class SolveMaze:
         Valid being defined as not the previous node, and not having been visited already.
         :return:
         """
-        compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
+        side_check = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
         if self.tree.current_node.state.equals(self.current_end_state()):
 
@@ -332,11 +332,11 @@ class SolveMaze:
                 y = prev_node_cords[1] - current_node_cords[1]
                 pos_diff = [x, y]
 
-                compare.remove(pos_diff)
+                side_check.remove(pos_diff)
 
             endport_is_adj = False
             # use visited bool array to see if the node we're trying to create is already made
-            for pos in compare:
+            for pos in side_check:
                 v_x = current_node_cords[0] + pos[0]
                 v_y = current_node_cords[1] + pos[1]
                 # self.has_been_colored will return false if the pos hasn't been visited
