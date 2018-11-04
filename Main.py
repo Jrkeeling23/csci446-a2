@@ -28,36 +28,39 @@ def read_in_maze(string):
     # the maze will go here, overwrites for each run
     maze_xy = []
 
-    # maze txt files must be in the same directory with the given names
-    if string == "Q" or string == "q":
-        running = False
-    elif string == "A" or string == "a":
-        auto_run = True
-    elif string == "S" or string == "s":
-        smart = not smart
-        print("Now using %s implementation\n" % ("Smart" if smart else "Dumb"))
-    elif string == "G" or string == "g":
-        gif_gen = not gif_gen
-        print("Now generating GIFs while solving,"
-              "\nWarning!! run time / memory space can become excessive"
-              " - Not recommended with variable assignments in excess of 25000\n"
-              if gif_gen else "GIF generation disabled\n")
-    elif string == '5':
-        __build_maze("assignment-resources/5x5maze.txt")
-    elif string == '7':
-        __build_maze("assignment-resources/7x7maze.txt")
-    elif string == '8':
-        __build_maze("assignment-resources/8x8maze.txt")
-    elif string == '9':
-        __build_maze("assignment-resources/9x9maze.txt")
-    elif string == '10':
-        __build_maze("assignment-resources/10x10maze.txt")
-    elif string == '12':
-        __build_maze("assignment-resources/12x12maze.txt")
-    elif string == '14':
-        __build_maze("assignment-resources/14x14maze.txt")
-    else:
-        __build_maze(string)
+    try:
+        # maze txt files must be in the same directory with the given names
+        if string == "Q" or string == "q":
+            running = False
+        elif string == "A" or string == "a":
+            auto_run = True
+        elif string == "S" or string == "s":
+            smart = not smart
+            print("Now using %s implementation\n" % ("Smart" if smart else "Dumb"))
+        elif string == "G" or string == "g":
+            gif_gen = not gif_gen
+            print("Now generating GIFs while solving,"
+                  "\nWarning!! run time / memory space can become excessive"
+                  " - Not recommended with variable assignments in excess of 25000\n"
+                  if gif_gen else "GIF generation disabled\n")
+        elif string == '5':
+            __build_maze("assignment-resources/5x5maze.txt")
+        elif string == '7':
+            __build_maze("assignment-resources/7x7maze.txt")
+        elif string == '8':
+            __build_maze("assignment-resources/8x8maze.txt")
+        elif string == '9':
+            __build_maze("assignment-resources/9x9maze.txt")
+        elif string == '10':
+            __build_maze("assignment-resources/10x10maze.txt")
+        elif string == '12':
+            __build_maze("assignment-resources/12x12maze.txt")
+        elif string == '14':
+            __build_maze("assignment-resources/14x14maze.txt")
+        else:
+            __build_maze(string)
+    except FileNotFoundError:
+        print("No such file %s" % string)
 
     return maze_xy
 

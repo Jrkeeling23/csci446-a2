@@ -20,6 +20,10 @@ class SolveMaze:
             self.make_gif = make_gif
             self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
             self.color_list_index = 0
+            # build the global color rgb reference
+            self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
+            self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
+                            [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
 
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -52,11 +56,6 @@ class SolveMaze:
             self.tree = T.Tree(init_node)
             # initialize trackers
             self.add_to_trackers(self.tree.current_node)
-
-            # build the global color rgb reference
-            self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
-            self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
-                            [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
 
             # lists the domain
             print("\nDomain: " + str(self.domain))
@@ -198,6 +197,9 @@ class SolveMaze:
 
             current_pos = [current_pos[0] + direction[0], current_pos[1] + direction[1]]
             self.add_to_trackers(N.Node(S.State(s1.color, current_pos), None))
+            # update animation
+            if self.make_gif:
+                self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
 
     def reorder(self, color):
         """
