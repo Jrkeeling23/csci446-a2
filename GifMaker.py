@@ -120,4 +120,3 @@ class GifMaker:
                 if filename.__contains__("maze" + str(maze_num)):
                     image = imageio.imread("png-list/" + filename)
                     writer.append_data(image)
-

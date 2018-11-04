@@ -11,6 +11,7 @@ class SolveMaze:
         if len(maze) > 0:
             self.vars_assigned = 0
             self.smart = smart
+            smart_str = "smart" if self.smart else "dumb"
             self.finished = False
             self.initMaze = maze
             self.make_gif = make_gif
@@ -27,7 +28,7 @@ class SolveMaze:
             temp = len(maze[0])
             self.has_been_colored = [[False] * temp for i in range(temp)]
             # set up answer array
-            self.answer = [[" "] * temp for i in range(temp)]
+            self.answer = [["_"] * temp for i in range(temp)]
 
             # get list of each starting state
             self.start_states, self.end_states = self.select_start_states()
@@ -64,7 +65,7 @@ class SolveMaze:
 
             # lists the domain
             print("\nDomain: " + str(self.domain))
-            print("Maze Solver Initialized")
+            print("Maze Solver Initialized, %s %sx%s:" % (smart_str, str(len(self.initMaze)), str(len(self.initMaze))))
 
             run_time = 0
             while not self.finished:
@@ -79,16 +80,21 @@ class SolveMaze:
                     break
 
             # export solution png
-            self.export_png("sol" + str(len(self.initMaze)))
+            self.export_png("sol_" + smart_str + str(len(self.initMaze)))
             # build the gif
             if self.make_gif:
                 size = len(self.initMaze)
-                GifMaker.GifMaker.make_gif("maze_animation_s_" + str(size) + "X" + str(size), size)
+                GifMaker.GifMaker.make_gif("maze_animation_" + smart_str + "_" + str(size) + "x" + str(size), size)
 
             # build and print the answer
             for color in self.color_lists:
                 for pos in color:
                     self.answer[pos[0]][pos[1]] = self.domain[self.color_lists.index(color)]
+            # add ports to answer
+            for state in self.start_states + self.end_states:
+                row, col = state.pos
+                self.answer[row][col] = state.color
+            # print answer
             for row in self.answer:
                 for col in row:
                     print(col, end=" ")
