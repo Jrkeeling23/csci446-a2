@@ -172,8 +172,6 @@ class SolveMaze:
                     self.reorder(edge_list[x].color)
                     # print(self.has_been_colored)
                 prev_color = edge_list[x]
-
-            print(edge_list)
         else:
             print("Edges are empty?")
 

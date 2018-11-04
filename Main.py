@@ -74,8 +74,7 @@ gif_gen = False
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
-input_list = ["5", "7", "8", "9", "10", "12", "14",
-              "s", "5", "7", "8", "9", "10", "12", "14", "Q"]
+input_list = ["5", "7", "8", "9", "10", "12", "14", "Q"]
 # index for auto run
 index = 0
 
