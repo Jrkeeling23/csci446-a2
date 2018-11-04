@@ -43,7 +43,7 @@ class SolveMaze:
                 self.has_been_colored[x][y] = True
 
             # set the root node to the first start state w/ no parent
-            init_node = N.Node(self.start_states[0], None)
+            init_node = N.Node(self.start_states[self.color_list_index], None)
 
             # initializes the Tree
             self.tree = T.Tree(init_node)
@@ -308,7 +308,7 @@ class SolveMaze:
         # add path values to find most constrained value
         for i in range(len(local_start_ls)):
             # variable that holds summed available paths of start and end nodes, as well as color index
-            lowest = [[start_path_number[i] + end_path_number[i], i]]
+            lowest.append([start_path_number[i] + end_path_number[i], i])
 
         lowest.sort(key=lambda x: x[0])
         new_start_list = []
@@ -321,24 +321,22 @@ class SolveMaze:
             new_end_list.append(local_end_ls[node_index])
             new_domain.append(local_domain[node_index])
         # insert finished lists
-        new_start_list.insert(0, remd_start_ls)
-        new_end_list.insert(0, remd_end_ls)
-        self.domain = new_domain.insert(0, remd_domain)
+        new_start_list = remd_start_ls + new_start_list
+        new_end_list = remd_end_ls + new_end_list
+        self.domain = remd_domain + new_domain
 
         return new_start_list, new_end_list
 
     def find_available_paths(self, node):
         """
         Finds available paths for a node
-        :param node:
-        :param size:
+        :param node: The node to find the number of available paths for
         :return: returns available paths for a node
         """
-        row, col = node.pos
         # counts number of available paths
         path = 0
         # find pos of adjacent states
-        x, y = self.tree.current_node.state.pos
+        x, y = node.pos
         # list of adjacent node positions
         adj_nodes = [[x + dx, y + dy] for dx, dy in self.compare]
         for x, y in adj_nodes:
