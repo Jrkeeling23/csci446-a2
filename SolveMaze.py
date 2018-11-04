@@ -31,6 +31,9 @@ class SolveMaze:
             # set up answer array
             self.answer = [["_"] * temp for i in range(temp)]
 
+            if smart:
+                self.detect_adjacent_edges()
+
             # get list of each starting state
             self.start_states, self.end_states = self.select_start_states()
 
@@ -46,8 +49,6 @@ class SolveMaze:
             self.tree = T.Tree(init_node)
             # initialize trackers
             self.add_to_trackers(self.tree.current_node)
-            self.detect_adjacent_edges()
-
 
             # clear vars we are done with, so they are not in the debugger for the following while loop
             x = None
@@ -121,13 +122,13 @@ class SolveMaze:
         size = len(self.initMaze)-1
 
         # top left to top right
-        for x in range(0,size+1):
+        for x in range(0, size+1):
             if self.initMaze[0][x] != '_':
                 # should add any initial color nodes in the top row
                 edge_list.append(S.State(self.initMaze[0][x], [0, x]))
 
         # top right to bottom right
-        for x in range(1,size+1):
+        for x in range(1, size+1):
             if self.initMaze[x][size] != '_':
                 # should add any initial color nodes in the right side of the maze
                 edge_list.append(S.State(self.initMaze[x][size], [x, size]))
@@ -148,29 +149,31 @@ class SolveMaze:
 
     def detect_adjacent_edges(self):
         """
-        TODO: edit this comment to match whats actually happening
         checks to see if there are any start/end nodes in edge_list,
-        and if there are, adds all the nodes from the start to end to
-        the node tree and marks them as visted in the boolean 2D array,
-        as well as removing the colors from the domain & color_list
+        and if there are, it marks them as visted in the boolean 2D array,
+        as well as reordering the colors from the domain & color_list
+        so they aren't re-attempted when the program is running.
+
+        TL;DR: It solves the edge cases first, and then lets the rest of the program run.
         :return:
         """
-        list = self.find_edge_colors()
+        edge_list = self.find_edge_colors()
 
-        if len(list) >= 2:
-            prev_color = list[-1]
+        if len(edge_list) >= 2:
+            prev_color = edge_list[-1]
 
             # iterates through the list to check for adjacent colors
-            for x in range(0, len(list)):
-                if list[x].color == prev_color.color:
-                    #print("Match! Color is: " + list[x].color + ","+str(list[x].pos)+" and :" + prev_color.color + "," + str(prev_color.pos))
+            for x in range(0, len(edge_list)):
+                if edge_list[x].color == prev_color.color:
+                    # print("Match! Color is: " + list[x].color + ","+str(list[x].pos)+"
+                    # and :" + prev_color.color + "," + str(prev_color.pos))
                     # Mimics adding a node to the tree and map without actually doing it
-                    self.add_edges_to_trackers(prev_color, list[x])
-                    self.reorder(list[x].color)
-                    #print(self.has_been_colored)
-                prev_color = list[x]
+                    self.add_edges_to_trackers(prev_color, edge_list[x])
+                    self.reorder(edge_list[x].color)
+                    # print(self.has_been_colored)
+                prev_color = edge_list[x]
 
-            print(list)
+            print(edge_list)
         else:
             print("Edges are empty?")
 
@@ -183,8 +186,8 @@ class SolveMaze:
         """
         directions = [[0, 1], [1, 0], [0, -1], [-1, 0]]  # N, E, S, W
 
-        current_pos = [s1.pos[0] , s1.pos[1]]
-        # Adds inital node
+        current_pos = [s1.pos[0], s1.pos[1]]
+        # Adds initial node
         self.add_to_trackers(N.Node(s1, None))
 
         # Then use a loop to have it go in that direction until it either hits an edge,or finds S2
@@ -218,7 +221,7 @@ class SolveMaze:
         temp_color_list = self.color_lists.pop(self.domain.index(color))
         self.domain.remove(color)
 
-        #moves the color_list to pos 0
+        #  moves the color_list to pos 0
         self.color_lists.insert(0, temp_color_list)
         self.domain.insert(0, color)
 
@@ -324,8 +327,6 @@ class SolveMaze:
         coord2 = node.pos[1]
         # counts number of available paths
         path = 0
-        # temp value to check
-        temp = None
 
         # at top edge
         if coords[0] != 0:
