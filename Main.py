@@ -73,7 +73,7 @@ gif_gen = False
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
-input_list = ["5", "7", "8", "9", "10", "12", "14"]
+auto_input = "5, 7, 8, 9, 10, 12, 14"
 # index for auto run
 index = 0
 
@@ -81,17 +81,21 @@ index = 0
 while running:
     # auto run emulates sequential keyboard input, to save the user hassle
     if auto_run:
-        print("Automatic running enabled: ", input_list[index])
-        inp = input_list[index]
-        index += 1
+        print("Automatic running enabled ...")
+        inp = auto_input
     # normal input
     else:
-        inp = "" + input("Enter the maze file you want to run, or enter an option:\n"
+        inp = "" + input("Enter the maze file you want to run, or enter an option(s) separated by \',\':\n"
                          "Options: 5, 7, 8, 9, 10, 12, or 14 to run the corresponding maze, "
                          "\nA to start automatic running,\nS to toggle smart/dumb implementation,"
                          "\nG to generate GIF animations of the solving process, "
                          "\nor Q to quit:\n")
     # always do this stuff
-    # init new SolveMaze here and input 2D list returned by read_in_maze
-    solve = SM.SolveMaze(read_in_maze(inp), smart, gif_gen)
+    # for loop to allow multiple inputs in sequence
+    for st in inp.split(","):
+        # remove the space after a comma if the user added one
+        if st[0] == " ":
+            st = st[1:]
+        # init new SolveMaze here and input 2D list returned by read_in_maze
+        solve = SM.SolveMaze(read_in_maze(st), smart, gif_gen)
 output_file.close()
