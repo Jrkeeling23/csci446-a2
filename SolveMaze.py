@@ -193,14 +193,14 @@ class SolveMaze:
             # Left side
             if (current_pos[1] == 0) and not (current_pos[0] == 0):
                 direction = directions[3]  # North
-            # Top Side
+            # Right Side
             elif (current_pos[1] == len(self.initMaze) - 1) and not (current_pos[0] == len(self.initMaze) - 1):
                 direction = directions[1]  # South
-            # Right Side
+            # Bottom Side
             elif (current_pos[0] == len(self.initMaze) - 1) and not (current_pos[1] == 0):
                 direction = directions[2]  # West
-            # Bottom Side
-            elif (current_pos[1] == len(self.initMaze) - 1) and not (current_pos[0] == len(self.initMaze) - 1):
+            # Top Side
+            elif (current_pos[0] == 0) and not (current_pos[0] == len(self.initMaze) - 1):
                 direction = directions[0]  # East
             else:
                 print("No direction?")
