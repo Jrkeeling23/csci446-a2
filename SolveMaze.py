@@ -289,70 +289,67 @@ class SolveMaze:
         """
         start_path_number = []
         end_path_number = []
-        smart_start_list = []
-        new_start_list = []
-        new_end_list = []
+
+        # trim lists to start of unfinished colors
+        local_domain = self.domain[self.color_list_index:]
+        local_start_ls = start_list[self.color_list_index:]
+        local_end_ls = end_list[self.color_list_index:]
+        # remainder of the trim
+        remd_domain = self.domain[:self.color_list_index]
+        remd_start_ls = start_list[:self.color_list_index]
+        remd_end_ls = end_list[:self.color_list_index]
+        lowest = []
+
         # check surrounding
-        for i in range(len(start_list)):
+        for i in range(len(local_start_ls)):
             # obtain possible moves for each color
-            start_path_number.append(self.find_available_paths(start_list[i], size=len(start_list)))
-            end_path_number.append(self.find_available_paths(end_list[i], size=len(end_list)))
+            start_path_number.append(self.find_available_paths(local_start_ls[i]))
+            end_path_number.append(self.find_available_paths(local_end_ls[i]))
         # add path values to find most constrained value
-        for i in range(len(start_list)):
+        for i in range(len(local_start_ls)):
             # variable that holds summed available paths of start and end nodes, as well as color index
             lowest = [[start_path_number[i] + end_path_number[i], i]]
-            smart_start_list.append(lowest)
-        # creates a list from least to greatest of available paths
-        smart_start_list.sort(key=lambda x: x[0])
-        for i in range(len(start_list)):
-            # iterates through smart_start to obtain domain
-            index_color = smart_start_list[i][1]
-            # orders start_list according to least available paths
-            new_start_list.append(start_list[index_color])
-            # orders start_list according to least available paths
-            new_end_list.append(end_list[index_color])
+
+        lowest.sort(key=lambda x: x[0])
+        new_start_list = []
+        new_end_list = []
+        new_domain = []
+        # build reordered lists
+        for i in range(len(lowest)):
+            node_index = lowest[i][1]
+            new_start_list.append(local_start_ls[node_index])
+            new_end_list.append(local_end_ls[node_index])
+            new_domain.append(local_domain[node_index])
+        # insert finished lists
+        new_start_list.insert(0, remd_start_ls)
+        new_end_list.insert(0, remd_end_ls)
+        self.domain = new_domain.insert(0, remd_domain)
+
         return new_start_list, new_end_list
 
-    def find_available_paths(self, node, size):
+    def find_available_paths(self, node):
         """
         Finds available paths for a node
         :param node:
         :param size:
         :return: returns available paths for a node
         """
-        coords = node.pos
-        # first value in coordinate
-        coord1 = node.pos[0]
-        # second value in coordinate
-        coord2 = node.pos[1]
+        row, col = node.pos
         # counts number of available paths
         path = 0
+        # find pos of adjacent states
+        x, y = self.tree.current_node.state.pos
+        # list of adjacent node positions
+        adj_nodes = [[x + dx, y + dy] for dx, dy in self.compare]
+        for x, y in adj_nodes:
+            try:
+                if x < 0 or y < 0:
+                    raise IndexError
+                elif not self.has_been_colored[x][y]:
+                    path += 1
+            except IndexError:
+                pass
 
-        # at top edge
-        if coords[0] != 0:
-            # check up
-            temp = coord1 - 1
-            # checks if it is not assigned a color
-            if not self.has_been_colored[temp][coord2]:
-                path += 1
-        # at left edge
-        elif coords[1] != 0:
-            # check left
-            temp = coord2 - 1
-            if not self.has_been_colored[0][temp]:
-                path += 1
-        # at bottom edge
-        elif coords[0] != size / 2 - 1:
-            # check down
-            temp = coord1 + 1
-            if not self.has_been_colored[temp][0]:
-                path += 1
-        # at right edge
-        elif coords[1] != size / 2 - 1:
-            # check right
-            temp = coord2 + 1
-            if not self.has_been_colored[0][temp]:
-                path += 1
         # return total number of available paths
         return path
 
