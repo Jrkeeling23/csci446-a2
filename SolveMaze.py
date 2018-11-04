@@ -469,7 +469,8 @@ class SolveMaze:
 
                 side_check.remove(pos_diff)
 
-            endport_is_adj = False
+            use_constraint_state = False
+            constraint_state = None
             # use visited bool array to see if the node we're trying to create is already made
             for pos in side_check:
                 v_x = current_node_cords[0] + pos[0]
@@ -482,18 +483,29 @@ class SolveMaze:
                     if not self.has_been_colored[v_x][v_y] or self.current_end_state().pos == [v_x, v_y]:
                         # end ports are the only valid adjacent node
                         if self.current_end_state().pos == [v_x, v_y]:
-                            endport_is_adj = True
+                            use_constraint_state = True
+                            constraint_state = self.current_end_state()
                             break
+
                         # Add node
                         temp = [v_x, v_y]
+
+                        # test if state is on a corner, if it is, it is the only valid state
+                        max_len = len(self.initMaze) - 1
+                        if temp == [0, 0] or temp == [0, max_len] \
+                                or temp == [max_len, 0] or temp == [max_len, max_len]:
+                            use_constraint_state = True
+                            constraint_state = S.State(current_color, temp)
+                            break
+
                         # this also appends as a child of the current node
                         self.make_node(current_color, temp)
                 except IndexError:
                     pass
             # clear all children and re-add the end port
-            if endport_is_adj:
+            if use_constraint_state:
                 self.tree.current_node.children = []
-                self.make_node2(self.current_end_state())
+                self.make_node2(constraint_state)
 
     def make_node(self, color, pos):
         node = N.Node(S.State(color, pos), self.tree.current_node)
