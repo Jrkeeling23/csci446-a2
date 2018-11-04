@@ -16,6 +16,7 @@ class SolveMaze:
             self.initMaze = maze
             self.make_gif = make_gif
             self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
+            self.color_list_index = 0
 
             # Make list of unique colors
             # use index of a 'COLOR' in domain to find it's numerical value
@@ -45,6 +46,8 @@ class SolveMaze:
             self.tree = T.Tree(init_node)
             # initialize trackers
             self.add_to_trackers(self.tree.current_node)
+            self.detect_adjacent_edges()
+
 
             # clear vars we are done with, so they are not in the debugger for the following while loop
             x = None
@@ -104,6 +107,122 @@ class SolveMaze:
         else:
             # no maze, can't do anything
             pass
+
+    def find_edge_colors(self):
+        """
+        Builds a list of color start/end nodes on the edge of the maze
+        :return: list of states of the edge nodes
+        """
+        # use initMaze to find edges
+
+        # initialize list to be returned
+        edge_list = []
+        # stores the size of the initial maze
+        size = len(self.initMaze)-1
+
+        # top left to top right
+        for x in range(0,size+1):
+            if self.initMaze[0][x] != '_':
+                # should add any initial color nodes in the top row
+                edge_list.append(S.State(self.initMaze[0][x], [0, x]))
+
+        # top right to bottom right
+        for x in range(1,size+1):
+            if self.initMaze[x][size] != '_':
+                # should add any initial color nodes in the right side of the maze
+                edge_list.append(S.State(self.initMaze[x][size], [x, size]))
+
+        # bottom right to bottom left
+        for x in range(size-1, -1, -1):
+            if self.initMaze[size][x] != '_':
+                # should add any initial color nodes in the bottom part of the maze
+                edge_list.append(S.State(self.initMaze[size][x], [size, x]))
+
+        # bottom left to the top left
+        for x in range(size-1, 0, -1):
+            if self.initMaze[x][0] != '_':
+                # should add any initial color nodes in the left side of the maze
+                edge_list.append(S.State(self.initMaze[x][0], [x, 0]))
+
+        return edge_list
+
+    def detect_adjacent_edges(self):
+        """
+        TODO: edit this comment to match whats actually happening
+        checks to see if there are any start/end nodes in edge_list,
+        and if there are, adds all the nodes from the start to end to
+        the node tree and marks them as visted in the boolean 2D array,
+        as well as removing the colors from the domain & color_list
+        :return:
+        """
+        list = self.find_edge_colors()
+
+        if len(list) >= 2:
+            prev_color = list[-1]
+
+            # iterates through the list to check for adjacent colors
+            for x in range(0, len(list)):
+                if list[x].color == prev_color.color:
+                    #print("Match! Color is: " + list[x].color + ","+str(list[x].pos)+" and :" + prev_color.color + "," + str(prev_color.pos))
+                    # Mimics adding a node to the tree and map without actually doing it
+                    self.add_edges_to_trackers(prev_color, list[x])
+                    self.reorder(list[x].color)
+                    #print(self.has_been_colored)
+                prev_color = list[x]
+
+            print(list)
+        else:
+            print("Edges are empty?")
+
+    def add_edges_to_trackers(self, s1, s2):
+        """
+        Adds all the nodes in between adjacent nodes on an edge to trackers
+        :param s1:
+        :param s2:
+        :return:
+        """
+        directions = [[0, 1], [1, 0], [0, -1], [-1, 0]]  # N, E, S, W
+
+        current_pos = [s1.pos[0] , s1.pos[1]]
+        # Adds inital node
+        self.add_to_trackers(N.Node(s1, None))
+
+        # Then use a loop to have it go in that direction until it either hits an edge,or finds S2
+        while current_pos != s2.pos:
+            # Left side
+            if (current_pos[1] == 0) and not (current_pos[0] == 0):
+                direction = directions[3]  # North
+            # Top Side
+            elif (current_pos[1] == len(self.initMaze) - 1) and not (current_pos[0] == len(self.initMaze) - 1):
+                direction = directions[1]  # South
+            # Right Side
+            elif (current_pos[0] == len(self.initMaze) - 1) and not (current_pos[1] == 0):
+                direction = directions[2]  # West
+            # Bottom Side
+            elif (current_pos[1] == len(self.initMaze) - 1) and not (current_pos[0] == len(self.initMaze) - 1):
+                direction = directions[0]  # East
+            else:
+                print("No direction?")
+
+            current_pos = [current_pos[0] + direction[0], current_pos[1] + direction[1]]
+            self.add_to_trackers(N.Node(S.State(s1.color, current_pos), None))
+
+    def reorder(self, color):
+        """
+        Reorders the domain and color_list to have this color first
+        Also adds 1 to the variable telling SolveMaze where to start
+        :param color:
+        :return:
+        """
+        # Store the color_list I'll be moving temporarily
+        temp_color_list = self.color_lists.pop(self.domain.index(color))
+        self.domain.remove(color)
+
+        #moves the color_list to pos 0
+        self.color_lists.insert(0, temp_color_list)
+        self.domain.insert(0, color)
+
+        self.color_list_index += 1
 
     def export_png(self, name):
         """
