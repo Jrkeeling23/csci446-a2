@@ -1,3 +1,6 @@
+"""
+Authors: George Engel, Cory Johns, Justin Keeling
+"""
 class Tree:
     """
     The state tree for the problem, 

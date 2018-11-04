@@ -1,3 +1,6 @@
+"""
+Authors: George Engel, Cory Johns, Justin Keeling
+"""
 import imageio
 import zlib
 import struct
@@ -6,14 +9,15 @@ import re
 
 
 class GifMaker:
-    """ Converts a 2D list of rgb lists into a true-colour PNG image.
-    Slightly modified from original code which only generated grayscale pngs
-    """
-    __copyright__ = "Copyright (C) 2014 Guido Draheim"
-    __licence__ = "Public Domain"
-
     @staticmethod
     def __make_png(data, height=None, width=None):
+        """
+        Converts a 2D list of rgb lists into a true-colour PNG image.
+        Slightly modified from original code which only generated grayscale pngs
+        """
+        __copyright__ = "Copyright (C) 2014 Guido Draheim"
+        __licence__ = "Public Domain"
+
         def I1(value):
             return struct.pack("!B", value & (2**8-1))
 

@@ -1,3 +1,6 @@
+"""
+Authors: George Engel, Cory Johns, Justin Keeling
+"""
 class State:
     """
     A class that represents a possible or actual state of a variable. Defined as a variable with a value from the domain.

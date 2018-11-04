@@ -1,3 +1,6 @@
+"""
+Authors: George Engel, Cory Johns, Justin Keeling
+"""
 class Node:
     """
     Node is a wrapper class for State that handles tree connectivity

@@ -25,10 +25,6 @@ def read_in_maze(string):
                         __x_tmp.append(__char)
                 maze_xy.append(__x_tmp)
 
-    def print_maze(maze):
-        for row in maze:
-            print(row)
-
     # the maze will go here, overwrites for each run
     maze_xy = []
 
@@ -74,7 +70,7 @@ gif_gen = False
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
-input_list = ["5", "7", "8", "9", "10", "12", "14", "Q"]
+input_list = ["5", "7", "8", "9", "10", "12", "14"]
 # index for auto run
 index = 0
 

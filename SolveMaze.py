@@ -1,3 +1,6 @@
+"""
+Authors: George Engel, Cory Johns, Justin Keeling
+"""
 import Tree as T
 import State as S
 import Node as N
@@ -49,18 +52,6 @@ class SolveMaze:
             self.tree = T.Tree(init_node)
             # initialize trackers
             self.add_to_trackers(self.tree.current_node)
-
-            # clear vars we are done with, so they are not in the debugger for the following while loop
-            x = None
-            del x
-            y = None
-            del y
-            state = None
-            del state
-            init_node = None
-            del init_node
-            temp = None
-            del temp
 
             # build the global color rgb reference
             self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
@@ -503,7 +494,6 @@ class SolveMaze:
         node = N.Node(state, self.tree.current_node)
         return node
 
-    # TODO: Make constraints evaluations
     def constraint_check(self):
         """
         evaluates constraints and returns the result
@@ -512,7 +502,6 @@ class SolveMaze:
         """
         if self.smart:
             # TODO add extra smart checks here
-
             pass
 
         # No zig zags
