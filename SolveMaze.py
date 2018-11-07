@@ -11,62 +11,80 @@ import PriorityQueue
 
 class SolveMaze:
 
-    def __init__(self, maze, smart, make_gif, manhattan):
-        if len(maze) > 0:
-            self.vars_assigned = 0
-            self.smart = smart
-            self.manhattan = manhattan
+    def __init__(self, maze, smart=True, make_gif=False, manhattan=True):
+        self.vars_assigned = 0
+        self.smart = smart
+
+        # manhattan variables
+        self.manhattan = manhattan
+        self.proximity_range = 5
+        self.proximity_bonus = 6  # actual bonus is proximity_bonus - distance
+        self.edge_bonus = 10
+        self.wall_bonus = 3
+
+        self.finished = False
+        self.initMaze = maze
+        self.make_gif = make_gif
+        self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
+        self.color_list_index = 0
+        # build the global color rgb reference
+        self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
+        self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
+                        [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
+
+        # Make list of unique colors
+        # use index of a 'COLOR' in domain to find it's numerical value
+        self.domain = self.find_unique_colors()
+
+        # make empty color lists for each unique color in domain
+        self.color_lists = [[] for i in range(len(self.domain))]
+
+        # initializes 2D boolean array for keeping track of whether a state has been colored already or not
+        temp = len(maze[0])
+        self.has_been_colored = [[False] * temp for i in range(temp)]
+        # set up answer array
+        self.answer = [["_"] * temp for i in range(temp)]
+
+        # initialed in start_solving
+        self.start_states, self.end_states = None, None
+        self.tree = None
+
+    def start_solving(self, suppress_output):
+        self.vars_assigned = 0
+        if not suppress_output:
             smart_str = "smart" if self.smart else "dumb"
             manhattan_str = "manhattan" if self.manhattan else ""
             smart_str = smart_str + manhattan_str
-            self.finished = False
-            self.initMaze = maze
-            self.make_gif = make_gif
-            self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
-            self.color_list_index = 0
-            # build the global color rgb reference
-            self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
-            self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
-                            [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
 
-            # Make list of unique colors
-            # use index of a 'COLOR' in domain to find it's numerical value
-            self.domain = self.find_unique_colors()
+        if self.smart:
+            self.detect_adjacent_edges()
 
-            # make empty color lists for each unique color in domain
-            self.color_lists = [[] for i in range(len(self.domain))]
+        # get list of each starting state
+        self.start_states, self.end_states = self.select_start_states()
 
-            # initializes 2D boolean array for keeping track of whether a state has been colored already or not
-            temp = len(maze[0])
-            self.has_been_colored = [[False] * temp for i in range(temp)]
-            # set up answer array
-            self.answer = [["_"] * temp for i in range(temp)]
+        # update has been colored for all port states
+        for state in self.start_states + self.end_states:
+            x, y = state.pos
+            self.has_been_colored[x][y] = True
 
-            if smart:
-                self.detect_adjacent_edges()
+        # set the root node to the first start state w/ no parent
+        init_node = N.Node(self.start_states[self.color_list_index], None)
 
-            # get list of each starting state
-            self.start_states, self.end_states = self.select_start_states()
+        # initializes the Tree
+        self.tree = T.Tree(init_node)
+        # initialize trackers
+        self.add_to_trackers(self.tree.current_node)
 
-            # update has been colored for all port states
-            for state in self.start_states + self.end_states:
-                x, y = state.pos
-                self.has_been_colored[x][y] = True
-
-            # set the root node to the first start state w/ no parent
-            init_node = N.Node(self.start_states[self.color_list_index], None)
-
-            # initializes the Tree
-            self.tree = T.Tree(init_node)
-            # initialize trackers
-            self.add_to_trackers(self.tree.current_node)
-
+        if not suppress_output:
             # lists the domain
             print("\nDomain: " + str(self.domain))
             print("Maze Solver Initialized, %s %sx%s:" % (smart_str, str(len(self.initMaze)), str(len(self.initMaze))))
 
-            run_time = 0
-            while not self.finished:
+        run_time = 0
+        while not self.finished:
+            if suppress_output:
+                self.evaluate()
+            else:
                 start_time = time.process_time()
                 self.evaluate()
                 if self.make_gif:
@@ -76,7 +94,7 @@ class SolveMaze:
                 if not self.make_gif and run_time >= 120:
                     print("Process aborted after 2 minutes")
                     break
-
+        if not suppress_output:
             # export solution png
             self.export_png("sol_" + smart_str + str(len(self.initMaze)))
             # build the gif
@@ -99,9 +117,6 @@ class SolveMaze:
                 print()
             print("Number of attempted variable assignments:", self.vars_assigned)
             print("Run time: %.5f seconds\n" % run_time)
-        else:
-            # no maze, can't do anything
-            pass
 
     def find_edge_colors(self):
         """
@@ -449,7 +464,7 @@ class SolveMaze:
                 # on a wall bonus
                 if (child.state.pos[0] == 0 or child.state.pos[0] == len(self.initMaze) - 1 or
                         child.state.pos[1] == 0 or child.state.pos[1] == len(self.initMaze) - 1):
-                    bonus -= 10  # manhattan distance of children can only differ by at most 2
+                    bonus -= self.edge_bonus  # manhattan distance of children can only differ by at most 2
 
                 # on a color wall bonus
                 local_pos = [[position[0] + dx, position[1] + dy] for dx, dy in self.compare]
@@ -458,25 +473,15 @@ class SolveMaze:
                     if row < 0 or row >= len(self.initMaze) or col < 0 or col >= len(self.initMaze):
                         pass  # not a valid coordinate
                     elif self.has_been_colored[row][col]:
-                        color_wall_bonus -= 3
+                        color_wall_bonus -= self.wall_bonus
                 # total bonus
                 bonus += color_wall_bonus
 
             # sort the children
             manhat_dis = abs(target_pos[0] - position[0]) + abs(target_pos[1] - position[1])
-            # add proximity bonus
-            if manhat_dis < 2:
-                bonus -= 5
-            elif manhat_dis < 3:
-                bonus -= 4
-            elif manhat_dis < 4:
-                bonus -= 3
-            elif manhat_dis < 5:
-                bonus -= 2
-            # elif manhat_dis < 6:
-            #     bonus -= 4
-            # elif manhat_dis < 7:
-            #     bonus -= 2
+            # TODO add proximity bonus
+            if manhat_dis < self.proximity_range:
+                bonus -= self.proximity_bonus - manhat_dis
 
             order_queue.put(manhat_dis + bonus, child)
 

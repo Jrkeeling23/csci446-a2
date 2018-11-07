@@ -2,6 +2,7 @@
 Authors: George Engel, Cory Johns, Justin Keeling 
 """
 import SolveMaze as SM
+from scipy.optimize import fmin
 
 
 def read_in_maze(string):
@@ -68,8 +69,27 @@ def read_in_maze(string):
     return maze_xy
 
 
+def objective_function(x, mazes):
+    # initial guess x = [5, 6, 10, 3] = [proximity_range, proximity_bonus, edge_bonus, wall_bonus]
+    val = x.copy()
+
+    i = 0
+    # get answers
+    for maze in mazes:
+        solve = SM.SolveMaze(maze, True, False, True)
+        solve.proximity_range = x[0]
+        solve.proximity_bonus = x[1]
+        solve.edge_bonus = x[2]
+        solve.wall_bonus = x[3]
+        solve.start_solving(True)
+        val[i] = solve.vars_assigned
+        i += 1
+
+    return val
+
+
 # "Global" variables
-running = True
+running = False
 auto_run = False
 smart = True
 gif_gen = False
@@ -101,5 +121,12 @@ while running:
         if st[0] == " ":
             st = st[1:]
         # init new SolveMaze here and input 2D list returned by read_in_maze
-        solve = SM.SolveMaze(read_in_maze(st), smart, gif_gen, manhattan)
+        maze = read_in_maze(st)
+        if len(maze) > 0:
+            solve = SM.SolveMaze(maze, smart, gif_gen, manhattan)
+            solve.start_solving(False)
 output_file.close()
+
+# optimize values
+mazes = [read_in_maze("5"), read_in_maze("7"), read_in_maze("8"), read_in_maze("9")]
+print(fmin(objective_function, [5, 6, 10, 3], mazes, xtol=1))
