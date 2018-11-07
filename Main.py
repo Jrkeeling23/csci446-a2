@@ -71,7 +71,7 @@ def read_in_maze(string):
 # "Global" variables
 running = True
 auto_run = False
-smart = False
+smart = True
 gif_gen = False
 manhattan = True
 # the output file

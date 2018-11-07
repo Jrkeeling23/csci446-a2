@@ -440,30 +440,45 @@ class SolveMaze:
         :return: Nothing, but the current node's children will be sorted
         """
         target_pos = self.current_end_state().pos
-        current_pos = self.tree.current_node.state.pos
         order_queue = PriorityQueue.PriorityQueue()
         for child in self.tree.current_node.children:
+            position = child.state.pos
             # add wall following bonus, if enabled
             bonus = 0
             if wall_follow:
                 # on a wall bonus
                 if (child.state.pos[0] == 0 or child.state.pos[0] == len(self.initMaze) - 1 or
                         child.state.pos[1] == 0 or child.state.pos[1] == len(self.initMaze) - 1):
-                    bonus -= 2  # manhattan distance of children can only differ by at most 2
+                    bonus -= 10  # manhattan distance of children can only differ by at most 2
 
                 # on a color wall bonus
-                local_pos = [[current_pos[0] + dx, current_pos[1] + dy] for dx, dy in self.compare]
+                local_pos = [[position[0] + dx, position[1] + dy] for dx, dy in self.compare]
                 color_wall_bonus = 1  # will always find the previous node
                 for row, col in local_pos:
                     if row < 0 or row >= len(self.initMaze) or col < 0 or col >= len(self.initMaze):
                         pass  # not a valid coordinate
                     elif self.has_been_colored[row][col]:
-                        color_wall_bonus -= 1
+                        color_wall_bonus -= 3
                 # total bonus
                 bonus += color_wall_bonus
 
             # sort the children
-            order_queue.put((abs(target_pos[0] - current_pos[0]) + abs(target_pos[1] - current_pos[1]) + bonus), child)
+            manhat_dis = abs(target_pos[0] - position[0]) + abs(target_pos[1] - position[1])
+            # add proximity bonus
+            if manhat_dis < 2:
+                bonus -= 5
+            elif manhat_dis < 3:
+                bonus -= 4
+            elif manhat_dis < 4:
+                bonus -= 3
+            elif manhat_dis < 5:
+                bonus -= 2
+            # elif manhat_dis < 6:
+            #     bonus -= 4
+            # elif manhat_dis < 7:
+            #     bonus -= 2
+
+            order_queue.put(manhat_dis + bonus, child)
 
         # clear current children, then add them back in queue order
         self.tree.current_node.children = []
@@ -550,7 +565,7 @@ class SolveMaze:
                 self.make_node2(self.current_end_state())
 
             # order the children according to distance from the goal, no use on children list less then 2
-            if self.manhattan and len(self.tree.current_node.children) > 1:
+            if self.smart and self.manhattan and len(self.tree.current_node.children) > 1:
                 self.manhattan_ordering(True)
 
     def make_node(self, color, pos):
