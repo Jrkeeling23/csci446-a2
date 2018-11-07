@@ -5,7 +5,7 @@ import SolveMaze as SM
 
 
 def read_in_maze(string):
-    global running, auto_run, smart, gif_gen
+    global running, auto_run, smart, gif_gen, manhattan
 
     def __build_maze(file):
         """
@@ -43,6 +43,9 @@ def read_in_maze(string):
                   "\nWarning!! run time / memory space can become excessive"
                   " - Not recommended with variable assignments in excess of 25000\n"
                   if gif_gen else "GIF generation disabled\n")
+        elif string == "M" or string == "m":
+            manhattan = not manhattan
+            print("Now%s using manhattan distance\n" % ("" if manhattan else " not"))
         elif string == '5':
             __build_maze("assignment-resources/5x5maze.txt")
         elif string == '7':
@@ -70,6 +73,7 @@ running = True
 auto_run = False
 smart = False
 gif_gen = False
+manhattan = True
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
@@ -97,5 +101,5 @@ while running:
         if st[0] == " ":
             st = st[1:]
         # init new SolveMaze here and input 2D list returned by read_in_maze
-        solve = SM.SolveMaze(read_in_maze(st), smart, gif_gen)
+        solve = SM.SolveMaze(read_in_maze(st), smart, gif_gen, manhattan)
 output_file.close()

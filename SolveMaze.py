@@ -6,16 +6,19 @@ import State as S
 import Node as N
 import time
 import GifMaker
-from queue import PriorityQueue
+import PriorityQueue
 
 
 class SolveMaze:
 
-    def __init__(self, maze, smart, make_gif):
+    def __init__(self, maze, smart, make_gif, manhattan):
         if len(maze) > 0:
             self.vars_assigned = 0
             self.smart = smart
+            self.manhattan = manhattan
             smart_str = "smart" if self.smart else "dumb"
+            manhattan_str = "manhattan" if self.manhattan else ""
+            smart_str = smart_str + manhattan_str
             self.finished = False
             self.initMaze = maze
             self.make_gif = make_gif
@@ -438,32 +441,34 @@ class SolveMaze:
         """
         target_pos = self.current_end_state().pos
         current_pos = self.tree.current_node.state.pos
-        order_queue = PriorityQueue()
+        order_queue = PriorityQueue.PriorityQueue()
         for child in self.tree.current_node.children:
             # add wall following bonus, if enabled
             bonus = 0
             if wall_follow:
                 # on a wall bonus
-                if (child.pos[0] == 0 or child.pos[0] == len(self.initMaze) - 1 or
-                        child.pos[1] == 0 or child.pos[1] == len(self.initMaze) - 1):
+                if (child.state.pos[0] == 0 or child.state.pos[0] == len(self.initMaze) - 1 or
+                        child.state.pos[1] == 0 or child.state.pos[1] == len(self.initMaze) - 1):
                     bonus -= 2  # manhattan distance of children can only differ by at most 2
 
                 # on a color wall bonus
                 local_pos = [[current_pos[0] + dx, current_pos[1] + dy] for dx, dy in self.compare]
                 color_wall_bonus = 1  # will always find the previous node
                 for row, col in local_pos:
-                    if self.has_been_colored[row][col]:
+                    if row < 0 or row >= len(self.initMaze) or col < 0 or col >= len(self.initMaze):
+                        pass  # not a valid coordinate
+                    elif self.has_been_colored[row][col]:
                         color_wall_bonus -= 1
                 # total bonus
                 bonus += color_wall_bonus
 
             # sort the children
-            order_queue.put([abs(target_pos[0] - current_pos[0]) + abs(target_pos[1] - current_pos[1] + bonus), child])
+            order_queue.put((abs(target_pos[0] - current_pos[0]) + abs(target_pos[1] - current_pos[1]) + bonus), child)
 
         # clear current children, then add them back in queue order
         self.tree.current_node.children = []
-        while not order_queue.empty():
-            self.tree.current_node.append_child(order_queue.get()[1])
+        while not order_queue.empty:
+            self.tree.current_node.append_child(order_queue.get())
 
     def check_end(self):
         for row in self.has_been_colored:
@@ -545,7 +550,7 @@ class SolveMaze:
                 self.make_node2(self.current_end_state())
 
             # order the children according to distance from the goal, no use on children list less then 2
-            if len(self.tree.current_node.children) > 1:
+            if self.manhattan and len(self.tree.current_node.children) > 1:
                 self.manhattan_ordering(True)
 
     def make_node(self, color, pos):
