@@ -6,6 +6,7 @@ import State as S
 import Node as N
 import time
 import GifMaker
+from queue import PriorityQueue
 
 
 class SolveMaze:
@@ -347,22 +348,22 @@ class SolveMaze:
         Gets the next starting state
         :return: starting state for the next color, or None if there are no more
         """
-        return self.__gen_next_state(self.start_states, 1)
+        return self.__gen_next_state(self.start_states, self.tree.current_node.state, 1)
 
     def current_end_state(self):
         """
         Gets the next ending state
-        :return: ending state for the next color, or None if there are no more
+        :return: ending state for the current color
         """
-        return self.__gen_next_state(self.end_states, 0)
+        return self.__gen_next_state(self.end_states, self.tree.current_node.state, 0)
 
-    def __gen_next_state(self, main_list, delta):
+    def __gen_next_state(self, main_list, state, delta):
         """
         Helper function for next state getting
         :param main_list: list to get from
         :return: next state, or None if there were none
         """
-        index = self.domain.index(self.tree.current_node.state.color) + delta
+        index = self.domain.index(state.color) + delta
         if index < len(main_list):
             return main_list[index]
         else:
@@ -428,6 +429,41 @@ class SolveMaze:
                 return False
         # no islands found
         return True
+
+    def manhattan_ordering(self, wall_follow):
+        """
+        Sorts the child nodes of the current node according to min manhattan distance to the end port
+        :param wall_follow: if True a bonus will be applied to the manhattan distance of a node if it is on a wall
+        :return: Nothing, but the current node's children will be sorted
+        """
+        target_pos = self.current_end_state().pos
+        current_pos = self.tree.current_node.state.pos
+        order_queue = PriorityQueue()
+        for child in self.tree.current_node.children:
+            # add wall following bonus, if enabled
+            bonus = 0
+            if wall_follow:
+                # on a wall bonus
+                if (child.pos[0] == 0 or child.pos[0] == len(self.initMaze) - 1 or
+                        child.pos[1] == 0 or child.pos[1] == len(self.initMaze) - 1):
+                    bonus -= 2  # manhattan distance of children can only differ by at most 2
+
+                # on a color wall bonus
+                local_pos = [[current_pos[0] + dx, current_pos[1] + dy] for dx, dy in self.compare]
+                color_wall_bonus = 1  # will always find the previous node
+                for row, col in local_pos:
+                    if self.has_been_colored[row][col]:
+                        color_wall_bonus -= 1
+                # total bonus
+                bonus += color_wall_bonus
+
+            # sort the children
+            order_queue.put([abs(target_pos[0] - current_pos[0]) + abs(target_pos[1] - current_pos[1] + bonus), child])
+
+        # clear current children, then add them back in queue order
+        self.tree.current_node.children = []
+        while not order_queue.empty():
+            self.tree.current_node.append_child(order_queue.get()[1])
 
     def check_end(self):
         for row in self.has_been_colored:
@@ -507,6 +543,10 @@ class SolveMaze:
             if endport_is_adj:
                 self.tree.current_node.children = []
                 self.make_node2(self.current_end_state())
+
+            # order the children according to distance from the goal, no use on children list less then 2
+            if len(self.tree.current_node.children) > 1:
+                self.manhattan_ordering(True)
 
     def make_node(self, color, pos):
         node = N.Node(S.State(color, pos), self.tree.current_node)
