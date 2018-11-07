@@ -320,7 +320,7 @@ class SolveMaze:
 
     def find_available_paths(self, node):
         """
-        Finds available paths for a node
+        Finds available paths for a node and returns the number
         :param node: The node to find the number of available paths for
         :return: returns available paths for a node
         """
@@ -408,6 +408,26 @@ class SolveMaze:
             return True
         else:
             return True
+
+    def check_for_islands(self, color):
+        """
+        Checks for islands in all subsequent colors, returns True if none-where found.
+        An island is formed when an unevaluated port is surrounded by other colors, dooming that color to failure.
+        :param color: the current color being evaluated, only ports for subsequent colors can be surrounded
+        during this color's evaluation.
+        :return: True if no islands have been formed
+        """
+        # start testing on the next color
+        i = self.domain.index(color) + 1
+        # disable this constraint for the last color
+        if i >= len(self.domain):
+            return True
+        # test each remaining port
+        for port in self.start_states[i:] + self.end_states[i:]:
+            if self.find_available_paths(port) == 0:
+                return False
+        # no islands found
+        return True
 
     def check_end(self):
         for row in self.has_been_colored:
@@ -503,8 +523,8 @@ class SolveMaze:
         :return: True if all test passed, False otherwise
         """
         if self.smart:
-            # TODO add extra smart checks here
-            pass
+            if not self.check_for_islands(self.tree.current_node.state.color):
+                return False
 
         # No zig zags
         if not self.check_zigzag():
