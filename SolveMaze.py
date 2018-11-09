@@ -15,12 +15,13 @@ class SolveMaze:
         self.vars_assigned = 0
         self.smart = smart
 
-        # manhattan variables
+        # manhattan variables, through grid testing the values given here are the best rounded for mazes 5x5 - 9x9
         self.manhattan = manhattan
-        self.proximity_range = 5
-        self.proximity_bonus = 6  # actual bonus is proximity_bonus - distance
-        self.edge_bonus = 10
-        self.wall_bonus = 3
+        self.proximity_range = 6
+        self.proximity_bonus = 85  # actual bonus is proximity_bonus - proximity_scale * distance
+        self.proximity_scale = 12
+        self.edge_bonus = 20
+        self.wall_bonus = 4
 
         self.finished = False
         self.initMaze = maze
@@ -49,7 +50,7 @@ class SolveMaze:
         self.start_states, self.end_states = None, None
         self.tree = None
 
-    def start_solving(self, suppress_output):
+    def start_solving(self, suppress_output=False):
         self.vars_assigned = 0
         if not suppress_output:
             smart_str = "smart" if self.smart else "dumb"
@@ -479,9 +480,8 @@ class SolveMaze:
 
             # sort the children
             manhat_dis = abs(target_pos[0] - position[0]) + abs(target_pos[1] - position[1])
-            # TODO add proximity bonus
             if manhat_dis < self.proximity_range:
-                bonus -= self.proximity_bonus - manhat_dis
+                bonus -= self.proximity_bonus - self.proximity_scale * manhat_dis
 
             order_queue.put(manhat_dis + bonus, child)
 
