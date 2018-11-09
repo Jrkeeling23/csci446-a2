@@ -127,6 +127,10 @@ while running:
         maze = read_in_maze(st)
         if len(maze) > 0:
             solve = SM.SolveMaze(maze, smart, gif_gen, manhattan)
+            smart_str = "smart" if smart else "dumb"
+            manhat_str = "_manhattan" if smart and manhattan else ""
+            solve.png_name = "maze" + str(len(maze)) + "_" + smart_str + manhat_str
+            solve.animation_name += "_" + smart_str + manhat_str
             solve.start_solving()
 output_file.close()
 

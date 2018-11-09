@@ -22,6 +22,8 @@ class SolveMaze:
         self.proximity_scale = 12
         self.edge_bonus = 20
         self.wall_bonus = 4
+        self.png_name = "maze_bk" + str(len(maze))
+        self.animation_name = "maze_animation"
 
         self.finished = False
         self.initMaze = maze
@@ -54,8 +56,8 @@ class SolveMaze:
         self.vars_assigned = 0
         if not suppress_output:
             smart_str = "smart" if self.smart else "dumb"
-            manhattan_str = "manhattan" if self.manhattan else ""
-            smart_str = smart_str + manhattan_str
+            manhattan_str = ", manhattan" if self.manhattan and self.smart else ""
+            smart_str = "Using:" + smart_str + manhattan_str
 
         if self.smart:
             self.detect_adjacent_edges()
@@ -82,6 +84,9 @@ class SolveMaze:
             print("Maze Solver Initialized, %s %sx%s:" % (smart_str, str(len(self.initMaze)), str(len(self.initMaze))))
 
         run_time = 0
+        # export initial state
+        if self.make_gif:
+            self.export_png(self.png_name + "_" + str(self.vars_assigned))
         while not self.finished:
             if suppress_output:
                 self.evaluate()
@@ -89,7 +94,7 @@ class SolveMaze:
                 start_time = time.process_time()
                 self.evaluate()
                 if self.make_gif:
-                    self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
+                    self.export_png(self.png_name + "_" + str(self.vars_assigned))
                 end_time = time.process_time()
                 run_time += end_time - start_time
                 if not self.make_gif and run_time >= 120:
@@ -97,11 +102,11 @@ class SolveMaze:
                     break
         if not suppress_output:
             # export solution png
-            self.export_png("sol_" + smart_str + str(len(self.initMaze)))
+            self.export_png("sol_" + self.png_name + str(len(self.initMaze)))
             # build the gif
             if self.make_gif:
                 size = len(self.initMaze)
-                GifMaker.GifMaker.make_gif("maze_animation_" + smart_str + "_" + str(size) + "x" + str(size), size)
+                GifMaker.GifMaker.make_gif(self.animation_name + str(size) + "x" + str(size), self.png_name)
 
             # build and print the answer
             for color in self.color_lists:
@@ -183,7 +188,7 @@ class SolveMaze:
                     # print(self.has_been_colored)
                 prev_color = edge_list[x]
         else:
-            print("Edges are empty?")
+            pass
 
     def add_edges_to_trackers(self, s1, s2):
         """
@@ -219,7 +224,7 @@ class SolveMaze:
             self.add_to_trackers(N.Node(S.State(s1.color, current_pos), None))
             # update animation
             if self.make_gif:
-                self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
+                self.export_png(self.png_name + "_" + str(self.vars_assigned))
 
     def reorder(self, color):
         """

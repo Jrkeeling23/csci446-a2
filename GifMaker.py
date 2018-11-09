@@ -108,19 +108,18 @@ class GifMaker:
             f.write(GifMaker.__make_png(data))
 
     @staticmethod
-    def make_gif(name, maze_num):
+    def make_gif(gif_name, png_name):
         # get entire contents of the directory
         filenames = os.listdir("png-list")
 
         # don't include non-relevant files
         for file in filenames.copy():
-            if not re.match(r"maze" + str(maze_num) + "_" + "(.*).png", file):
+            if not re.match(r"" + png_name + "_" + "(\d*).png", file):
                 filenames.remove(file)
 
         # sort on the frame number
-        filenames.sort(key=lambda x: int(re.search("maze" + str(maze_num) + "_" + "(.*).png", x).group(1)))
-        with imageio.get_writer(name + ".gif", mode='I') as writer:
+        filenames.sort(key=lambda x: int(re.search(png_name + "_" + "(\d*).png", x).group(1)))
+        with imageio.get_writer(gif_name + ".gif", mode='I') as writer:
             for filename in filenames:
-                if filename.__contains__("maze" + str(maze_num)):
-                    image = imageio.imread("png-list/" + filename)
-                    writer.append_data(image)
+                image = imageio.imread("png-list/" + filename)
+                writer.append_data(image)
