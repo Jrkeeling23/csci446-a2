@@ -23,7 +23,7 @@ class SolveMaze:
         self.edge_bonus = 20
         self.wall_bonus = 4
         self.png_name = "maze_bk" + str(len(maze))
-        self.animation_name = "maze_animation"
+        self.animation_name = "maze_animation_holechecking"
 
         self.finished = False
         self.initMaze = maze
