@@ -45,6 +45,12 @@ class SolveMaze:
         # initializes 2D boolean array for keeping track of whether a state has been colored already or not
         temp = len(maze[0])
         self.has_been_colored = [[False] * temp for i in range(temp)]
+
+        # set up empty square matrix for detecting holes / trapped colors
+        self.hole_matrix = [[-1] * temp for i in range(temp)]
+        # index for holes
+        self.hole_index = 0
+
         # set up answer array
         self.answer = [["_"] * temp for i in range(temp)]
 
@@ -488,12 +494,111 @@ class SolveMaze:
             if manhat_dis < self.proximity_range:
                 bonus -= self.proximity_bonus - self.proximity_scale * manhat_dis
 
-            order_queue.put(manhat_dis + bonus, child)
+            order_queue.put(child, manhat_dis + bonus)
 
         # clear current children, then add them back in queue order
         self.tree.current_node.children = []
         while not order_queue.empty:
             self.tree.current_node.append_child(order_queue.get())
+
+    def __update_hole_matrix(self):
+        reevaluate = PriorityQueue.PriorityQueue()
+        reevaluate.priority = False
+        self.hole_index = 0
+
+        for row in range(len(self.initMaze)):
+            for col in range(len(self.initMaze)):
+                # only check empty squares
+                self.hole_matrix[row][col] = -1
+                if not self.has_been_colored[row][col]:
+                    reevaluate.put([row, col])
+
+        while not reevaluate.empty:
+            row, col = reevaluate.get()
+            adj_queue = PriorityQueue.PriorityQueue()
+            for dx, dy in self.compare:
+                i, j = row + dx, col + dy
+                # check for out of bounds
+                if not (i < 0 or j < 0 or i >= len(self.initMaze) or j >= len(self.initMaze)):
+                    # check for empty square
+                    if not self.hole_matrix[i][j] == -1:
+                        adj_queue.put([self.hole_matrix[i][j], [i, j]], self.hole_matrix[i][j])
+
+            # adj squares exist, update them
+            if not adj_queue.empty:
+                # set this hole to the lowest available value
+                min_val = adj_queue.get()[0]
+                # set this square to the min
+                self.hole_matrix[row][col] = min_val
+                # update higher adj values
+                while not adj_queue.empty:
+                    next_val = adj_queue.get()
+                    # don't reevaluate squares in the same hole
+                    if not next_val[0] == min_val:
+                        reevaluate.put(next_val[1])
+            # no adj squares
+            else:
+                self.hole_matrix[row][col] = self.hole_index
+                self.hole_index += 1
+
+    def check_for_holes(self):
+        hole_list = []
+        # find all holes in the maze
+        for row in self.hole_matrix:
+            for hole_num in row:
+                if hole_num >= 0 and not hole_list.__contains__(hole_num):
+                    hole_list.append(hole_num)
+
+        # for remaining port pairs, check
+        current_index = self.domain.index(self.tree.current_node.state.color)
+        for n in range(len(self.start_states[current_index:])):
+            skip = False
+            # use the current node instead of the start node for the current color
+            if n == 0:
+                pos = [self.tree.current_node.state.pos, self.current_end_state().pos]
+                # disable current color for check if the current state is adj to the end state
+                if abs(pos[0][0] - pos[1][0]) + abs(pos[0][1] - pos[1][1]) <= 1:
+                    skip = True
+            # use the starting port for unexpanded colors
+            else:
+                pos = [self.start_states[current_index + n].pos, self.end_states[current_index + n].pos]
+            adj_list = [[], []]
+
+            if not skip:
+                # get adj square coordinates for the pair
+                for dx, dy in self.compare:
+                    for i in range(len(pos)):
+                        delta_x, delta_y = [pos[i][0] + dx, pos[i][1] + dy]
+                        # check for out of bounds
+                        if not (delta_x < 0 or delta_y < 0 or
+                                delta_x >= len(self.initMaze) or delta_y >= len(self.initMaze)):
+                            # check for empty square
+                            if not self.has_been_colored[delta_x][delta_y]:
+                                # add square to current list
+                                adj_list[i].append(self.hole_matrix[delta_x][delta_y])
+                # check if pair share a hole
+                valid = False
+                for hole1 in adj_list[0]:
+                    for hole2 in adj_list[1]:
+                        if hole1 == hole2:
+                            try:
+                                # keep checking on a valid pair to remove all adj holes from the list
+                                valid = True
+                                # remove
+                                hole_list.remove(hole1)
+                            except ValueError:
+                                pass
+
+                # a pair of remaining ports cannot reach each other
+                if not valid:
+                    return False
+
+        # also check all available holes are used
+        if len(hole_list) > 0:
+            return False
+
+        # all tests passed
+        return True
 
     def check_end(self):
         for row in self.has_been_colored:
@@ -595,6 +700,8 @@ class SolveMaze:
         if self.smart:
             if not self.check_for_islands(self.tree.current_node.state.color):
                 return False
+            if not self.check_for_holes():
+                return False
 
         # No zig zags
         if not self.check_zigzag():
@@ -652,6 +759,8 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
+        # update hole tracking
+        self.__update_hole_matrix()
         # increment number of attempted variable assignments count
         self.vars_assigned += 1
 
@@ -674,6 +783,8 @@ class SolveMaze:
             x, y = node.state.pos
             # set the boolean array at this node's location to False
             self.has_been_colored[x][y] = False
+            # update hole tracking
+            self.__update_hole_matrix()
         else:
             # not important for non-port nodes since they are regenerated
             self.tree.current_node.state.expanded = False
