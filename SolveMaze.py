@@ -103,7 +103,7 @@ class SolveMaze:
                     self.export_png(self.png_name + "_" + str(self.vars_assigned))
                 end_time = time.process_time()
                 run_time += end_time - start_time
-                if not self.make_gif and run_time >= 120:
+                if False and not self.make_gif and run_time >= 120:
                     print("Process aborted after 2 minutes")
                     break
         if not suppress_output:
