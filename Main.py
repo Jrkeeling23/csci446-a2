@@ -2,10 +2,13 @@
 Authors: George Engel, Cory Johns, Justin Keeling 
 """
 import SolveMaze as SM
+from scipy.optimize import fmin
+import numpy as np
+import time
 
 
 def read_in_maze(string):
-    global running, auto_run, smart, gif_gen
+    global running, auto_run, smart, gif_gen, manhattan
 
     def __build_maze(file):
         """
@@ -43,6 +46,9 @@ def read_in_maze(string):
                   "\nWarning!! run time / memory space can become excessive"
                   " - Not recommended with variable assignments in excess of 25000\n"
                   if gif_gen else "GIF generation disabled\n")
+        elif string == "M" or string == "m":
+            manhattan = not manhattan
+            print("Now%s using manhattan distance\n" % ("" if manhattan else " not"))
         elif string == '5':
             __build_maze("assignment-resources/5x5maze.txt")
         elif string == '7':
@@ -65,11 +71,32 @@ def read_in_maze(string):
     return maze_xy
 
 
+def objective_function(x, mazes):
+    # initial guess x = [5, 6, 10, 3] = [proximity_range, proximity_bonus, edge_bonus, wall_bonus]
+    val = [0, 0, 0, 0]
+
+    i = 0
+    # get answers
+    for maze in mazes:
+        solve = SM.SolveMaze(maze, True, False, True)
+        solve.proximity_range = x[0]
+        solve.proximity_bonus = x[1]
+        solve.proximity_scale = x[2]
+        solve.edge_bonus = x[3]
+        solve.wall_bonus = x[4]
+        solve.start_solving(True)
+        val[i] = solve.vars_assigned
+        i += 1
+
+    return val
+
+
 # "Global" variables
 running = True
 auto_run = False
-smart = False
+smart = True
 gif_gen = False
+manhattan = True
 # the output file
 output_file = open('output.txt', 'w+')
 # input for auto run
@@ -97,5 +124,37 @@ while running:
         if st[0] == " ":
             st = st[1:]
         # init new SolveMaze here and input 2D list returned by read_in_maze
-        solve = SM.SolveMaze(read_in_maze(st), smart, gif_gen)
+        maze = read_in_maze(st)
+        if len(maze) > 0:
+            solve = SM.SolveMaze(maze, smart, gif_gen, manhattan)
+            smart_str = "smart" if smart else "dumb"
+            manhat_str = "_manhattan" if smart and manhattan else ""
+            solve.png_name = "maze" + str(len(maze)) + "_" + smart_str + manhat_str
+            solve.animation_name += "_" + smart_str + manhat_str
+            solve.start_solving()
 output_file.close()
+
+# # optimize values, with grid testing
+# mazes = (read_in_maze("5"), read_in_maze("7"), read_in_maze("8"), read_in_maze("9"))
+# # [proximity_range, proximity_bonus, proximity_scale, edge_bonus, wall_bonus]
+# grid1 = [6]
+# grid2 = [85]
+# grid2b = [12]
+# grid3 = [20]
+# grid4 = [4]
+# best = [0, -1]
+# start_time = time.process_time()
+# for p_range in grid1:
+#     for p_scale in grid2b:
+#         for p_bonus in grid2:
+#             for e_bonus in grid3:
+#                 for w_bonus in grid4:
+#                     x0 = [p_range, p_bonus, p_scale, e_bonus, w_bonus]
+#                     vars_assigned = objective_function(x0, mazes)
+#                     s = sum(vars_assigned)
+#                     if s < best[-1] or best[-1] == -1:
+#                         best = vars_assigned + [s]
+#                     print("for", x0, "vars =", vars_assigned)
+# end_time = time.process_time()
+# print(best)
+# print("process took:", end_time - start_time)

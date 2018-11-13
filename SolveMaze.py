@@ -6,79 +6,113 @@ import State as S
 import Node as N
 import time
 import GifMaker
+import PriorityQueue
 
 
 class SolveMaze:
 
-    def __init__(self, maze, smart, make_gif):
-        if len(maze) > 0:
-            self.vars_assigned = 0
-            self.smart = smart
+    def __init__(self, maze, smart=True, make_gif=False, manhattan=True):
+        self.vars_assigned = 0
+        self.smart = smart
+
+        # manhattan variables, through grid testing the values given here are the best rounded for mazes 5x5 - 9x9
+        self.manhattan = manhattan
+        self.proximity_range = 6
+        self.proximity_bonus = 85  # actual bonus is proximity_bonus - proximity_scale * distance
+        self.proximity_scale = 12
+        self.edge_bonus = 20
+        self.wall_bonus = 4
+        self.png_name = "maze_bk" + str(len(maze))
+        self.animation_name = "maze_animation_holechecking"
+
+        self.finished = False
+        self.initMaze = maze
+        self.make_gif = make_gif
+        self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
+        self.color_list_index = 0
+        # build the global color rgb reference
+        self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
+        self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
+                        [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
+
+        # Make list of unique colors
+        # use index of a 'COLOR' in domain to find it's numerical value
+        self.domain = self.find_unique_colors()
+
+        # make empty color lists for each unique color in domain
+        self.color_lists = [[] for i in range(len(self.domain))]
+
+        # initializes 2D boolean array for keeping track of whether a state has been colored already or not
+        temp = len(maze[0])
+        self.has_been_colored = [[False] * temp for i in range(temp)]
+
+        # set up empty square matrix for detecting holes / trapped colors
+        self.hole_matrix = [[-1] * temp for i in range(temp)]
+        # index for holes
+        self.hole_index = 0
+
+        # set up answer array
+        self.answer = [["_"] * temp for i in range(temp)]
+
+        # initialed in start_solving
+        self.start_states, self.end_states = None, None
+        self.tree = None
+
+    def start_solving(self, suppress_output=False):
+        self.vars_assigned = 0
+        if not suppress_output:
             smart_str = "smart" if self.smart else "dumb"
-            self.finished = False
-            self.initMaze = maze
-            self.make_gif = make_gif
-            self.compare = [[0, -1], [-1, 0], [0, 1], [1, 0]]
-            self.color_list_index = 0
-            # build the global color rgb reference
-            self.index_ref = ['B', 'A', 'W', 'R', 'P', 'D', 'O', 'G', 'Y', 'K', 'Q']
-            self.rgb_ref = [[0, 0, 255], [125, 255, 210], [255, 255, 255], [255, 0, 0], [140, 0, 255],
-                            [190, 150, 100], [255, 100, 0], [0, 255, 0], [255, 255, 0], [230, 160, 200], [140, 60, 90]]
+            manhattan_str = ", manhattan" if self.manhattan and self.smart else ""
+            smart_str = "Using:" + smart_str + manhattan_str
 
-            # Make list of unique colors
-            # use index of a 'COLOR' in domain to find it's numerical value
-            self.domain = self.find_unique_colors()
+        if self.smart:
+            self.detect_adjacent_edges()
 
-            # make empty color lists for each unique color in domain
-            self.color_lists = [[] for i in range(len(self.domain))]
+        # get list of each starting state
+        self.start_states, self.end_states = self.select_start_states()
 
-            # initializes 2D boolean array for keeping track of whether a state has been colored already or not
-            temp = len(maze[0])
-            self.has_been_colored = [[False] * temp for i in range(temp)]
-            # set up answer array
-            self.answer = [["_"] * temp for i in range(temp)]
+        # update has been colored for all port states
+        for state in self.start_states + self.end_states:
+            x, y = state.pos
+            self.has_been_colored[x][y] = True
 
-            if smart:
-                self.detect_adjacent_edges()
+        # set the root node to the first start state w/ no parent
+        init_node = N.Node(self.start_states[self.color_list_index], None)
 
-            # get list of each starting state
-            self.start_states, self.end_states = self.select_start_states()
+        # initializes the Tree
+        self.tree = T.Tree(init_node)
+        # initialize trackers
+        self.add_to_trackers(self.tree.current_node)
 
-            # update has been colored for all port states
-            for state in self.start_states + self.end_states:
-                x, y = state.pos
-                self.has_been_colored[x][y] = True
-
-            # set the root node to the first start state w/ no parent
-            init_node = N.Node(self.start_states[self.color_list_index], None)
-
-            # initializes the Tree
-            self.tree = T.Tree(init_node)
-            # initialize trackers
-            self.add_to_trackers(self.tree.current_node)
-
+        if not suppress_output:
             # lists the domain
             print("\nDomain: " + str(self.domain))
             print("Maze Solver Initialized, %s %sx%s:" % (smart_str, str(len(self.initMaze)), str(len(self.initMaze))))
 
-            run_time = 0
-            while not self.finished:
+        run_time = 0
+        # export initial state
+        if self.make_gif:
+            self.export_png(self.png_name + "_" + str(self.vars_assigned))
+        while not self.finished:
+            if suppress_output:
+                self.evaluate()
+            else:
                 start_time = time.process_time()
                 self.evaluate()
                 if self.make_gif:
-                    self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
+                    self.export_png(self.png_name + "_" + str(self.vars_assigned))
                 end_time = time.process_time()
                 run_time += end_time - start_time
-                if not self.make_gif and run_time >= 120:
+                if False and not self.make_gif and run_time >= 120:
                     print("Process aborted after 2 minutes")
                     break
-
+        if not suppress_output:
             # export solution png
-            self.export_png("sol_" + smart_str + str(len(self.initMaze)))
+            self.export_png("sol_" + self.png_name + str(len(self.initMaze)))
             # build the gif
             if self.make_gif:
                 size = len(self.initMaze)
-                GifMaker.GifMaker.make_gif("maze_animation_" + smart_str + "_" + str(size) + "x" + str(size), size)
+                GifMaker.GifMaker.make_gif(self.animation_name + str(size) + "x" + str(size), self.png_name)
 
             # build and print the answer
             for color in self.color_lists:
@@ -95,9 +129,6 @@ class SolveMaze:
                 print()
             print("Number of attempted variable assignments:", self.vars_assigned)
             print("Run time: %.5f seconds\n" % run_time)
-        else:
-            # no maze, can't do anything
-            pass
 
     def find_edge_colors(self):
         """
@@ -109,28 +140,28 @@ class SolveMaze:
         # initialize list to be returned
         edge_list = []
         # stores the size of the initial maze
-        size = len(self.initMaze)-1
+        size = len(self.initMaze) - 1
 
         # top left to top right
-        for x in range(0, size+1):
+        for x in range(0, size + 1):
             if self.initMaze[0][x] != '_':
                 # should add any initial color nodes in the top row
                 edge_list.append(S.State(self.initMaze[0][x], [0, x]))
 
         # top right to bottom right
-        for x in range(1, size+1):
+        for x in range(1, size + 1):
             if self.initMaze[x][size] != '_':
                 # should add any initial color nodes in the right side of the maze
                 edge_list.append(S.State(self.initMaze[x][size], [x, size]))
 
         # bottom right to bottom left
-        for x in range(size-1, -1, -1):
+        for x in range(size - 1, -1, -1):
             if self.initMaze[size][x] != '_':
                 # should add any initial color nodes in the bottom part of the maze
                 edge_list.append(S.State(self.initMaze[size][x], [size, x]))
 
         # bottom left to the top left
-        for x in range(size-1, 0, -1):
+        for x in range(size - 1, 0, -1):
             if self.initMaze[x][0] != '_':
                 # should add any initial color nodes in the left side of the maze
                 edge_list.append(S.State(self.initMaze[x][0], [x, 0]))
@@ -143,7 +174,6 @@ class SolveMaze:
         and if there are, it marks them as visted in the boolean 2D array,
         as well as reordering the colors from the domain & color_list
         so they aren't re-attempted when the program is running.
-
         TL;DR: It solves the edge cases first, and then lets the rest of the program run.
         :return:
         """
@@ -163,7 +193,7 @@ class SolveMaze:
                     # print(self.has_been_colored)
                 prev_color = edge_list[x]
         else:
-            print("Edges are empty?")
+            pass
 
     def add_edges_to_trackers(self, s1, s2):
         """
@@ -199,7 +229,7 @@ class SolveMaze:
             self.add_to_trackers(N.Node(S.State(s1.color, current_pos), None))
             # update animation
             if self.make_gif:
-                self.export_png("maze" + str(len(self.initMaze)) + "_" + str(self.vars_assigned))
+                self.export_png(self.png_name + "_" + str(self.vars_assigned))
 
     def reorder(self, color):
         """
@@ -271,6 +301,10 @@ class SolveMaze:
             # return list of start states
             return start_node_list, end_node_list
 
+    def smart_start_2(self, start_list, end_list, color):
+        self.color_list_index = self.domain.index(color)
+        self.start_states, self.end_states = self.smart_start(start_list, end_list)
+
     def smart_start(self, start_list, end_list):
         """
         Makes two lists for smarter start domain
@@ -320,7 +354,7 @@ class SolveMaze:
 
     def find_available_paths(self, node):
         """
-        Finds available paths for a node
+        Finds available paths for a node and returns the number
         :param node: The node to find the number of available paths for
         :return: returns available paths for a node
         """
@@ -347,22 +381,22 @@ class SolveMaze:
         Gets the next starting state
         :return: starting state for the next color, or None if there are no more
         """
-        return self.__gen_next_state(self.start_states, 1)
+        return self.__gen_next_state(self.start_states, self.tree.current_node.state, 1)
 
     def current_end_state(self):
         """
         Gets the next ending state
-        :return: ending state for the next color, or None if there are no more
+        :return: ending state for the current color
         """
-        return self.__gen_next_state(self.end_states, 0)
+        return self.__gen_next_state(self.end_states, self.tree.current_node.state, 0)
 
-    def __gen_next_state(self, main_list, delta):
+    def __gen_next_state(self, main_list, state, delta):
         """
         Helper function for next state getting
         :param main_list: list to get from
         :return: next state, or None if there were none
         """
-        index = self.domain.index(self.tree.current_node.state.color) + delta
+        index = self.domain.index(state.color) + delta
         if index < len(main_list):
             return main_list[index]
         else:
@@ -409,6 +443,170 @@ class SolveMaze:
         else:
             return True
 
+    def check_for_islands(self, color):
+        """
+        Checks for islands in all subsequent colors, returns True if none-where found.
+        An island is formed when an unevaluated port is surrounded by other colors, dooming that color to failure.
+        :param color: the current color being evaluated, only ports for subsequent colors can be surrounded
+        during this color's evaluation.
+        :return: True if no islands have been formed
+        """
+        # start testing on the next color
+        i = self.domain.index(color) + 1
+        # disable this constraint for the last color
+        if i >= len(self.domain):
+            return True
+        # test each remaining port
+        for port in self.start_states[i:] + self.end_states[i:]:
+            if self.find_available_paths(port) == 0:
+                return False
+        # no islands found
+        return True
+
+    def manhattan_ordering(self, wall_follow):
+        """
+        Sorts the child nodes of the current node according to min manhattan distance to the end port
+        :param wall_follow: if True a bonus will be applied to the manhattan distance of a node if it is on a wall
+        :return: Nothing, but the current node's children will be sorted
+        """
+        target_pos = self.current_end_state().pos
+        order_queue = PriorityQueue.PriorityQueue()
+        for child in self.tree.current_node.children:
+            position = child.state.pos
+            # add wall following bonus, if enabled
+            bonus = 0
+            if wall_follow:
+                # on a wall bonus
+                if (child.state.pos[0] == 0 or child.state.pos[0] == len(self.initMaze) - 1 or
+                        child.state.pos[1] == 0 or child.state.pos[1] == len(self.initMaze) - 1):
+                    bonus -= self.edge_bonus  # manhattan distance of children can only differ by at most 2
+
+                # on a color wall bonus
+                local_pos = [[position[0] + dx, position[1] + dy] for dx, dy in self.compare]
+                color_wall_bonus = 1  # will always find the previous node
+                for row, col in local_pos:
+                    if row < 0 or row >= len(self.initMaze) or col < 0 or col >= len(self.initMaze):
+                        pass  # not a valid coordinate
+                    elif self.has_been_colored[row][col]:
+                        color_wall_bonus -= self.wall_bonus
+                # total bonus
+                bonus += color_wall_bonus
+
+            # sort the children
+            manhat_dis = abs(target_pos[0] - position[0]) + abs(target_pos[1] - position[1])
+            if manhat_dis < self.proximity_range:
+                bonus -= self.proximity_bonus - self.proximity_scale * manhat_dis
+
+            order_queue.put(child, manhat_dis + bonus)
+
+        # clear current children, then add them back in queue order
+        self.tree.current_node.children = []
+        while not order_queue.empty:
+            self.tree.current_node.append_child(order_queue.get())
+
+    def __update_hole_matrix(self):
+        reevaluate = PriorityQueue.PriorityQueue()
+        reevaluate.priority = False
+        self.hole_index = 0
+
+        for row in range(len(self.initMaze)):
+            for col in range(len(self.initMaze)):
+                # only check empty squares
+                self.hole_matrix[row][col] = -1
+                if not self.has_been_colored[row][col]:
+                    reevaluate.put([row, col])
+
+        while not reevaluate.empty:
+            row, col = reevaluate.get()
+            adj_queue = PriorityQueue.PriorityQueue()
+            for dx, dy in self.compare:
+                i, j = row + dx, col + dy
+                # check for out of bounds
+                if not (i < 0 or j < 0 or i >= len(self.initMaze) or j >= len(self.initMaze)):
+                    # check for empty square
+                    if not self.hole_matrix[i][j] == -1:
+                        adj_queue.put([self.hole_matrix[i][j], [i, j]], self.hole_matrix[i][j])
+
+            # adj squares exist, update them
+            if not adj_queue.empty:
+                # set this hole to the lowest available value
+                min_val = adj_queue.get()[0]
+                # set this square to the min
+                self.hole_matrix[row][col] = min_val
+                # update higher adj values
+                while not adj_queue.empty:
+                    next_val = adj_queue.get()
+                    # don't reevaluate squares in the same hole
+                    if not next_val[0] == min_val:
+                        reevaluate.put(next_val[1])
+            # no adj squares
+            else:
+                self.hole_matrix[row][col] = self.hole_index
+                self.hole_index += 1
+
+    def check_for_holes(self):
+        """
+        A hole is where any adjacent holes are empty.
+        :return:
+        """
+        hole_list = []
+        # find all holes in the maze
+        for row in self.hole_matrix:
+            for hole_num in row:
+                if hole_num >= 0 and not hole_list.__contains__(hole_num):
+                    hole_list.append(hole_num)
+
+        # for remaining port pairs, check
+        current_index = self.domain.index(self.tree.current_node.state.color)
+        for n in range(len(self.start_states[current_index:])):
+            skip = False
+            # use the current node instead of the start node for the current color
+            if n == 0:
+                pos = [self.tree.current_node.state.pos, self.current_end_state().pos]
+                # disable current color for check if the current state is adj to the end state
+                if abs(pos[0][0] - pos[1][0]) + abs(pos[0][1] - pos[1][1]) <= 1:
+                    skip = True
+            # use the starting port for unexpanded colors
+            else:
+                pos = [self.start_states[current_index + n].pos, self.end_states[current_index + n].pos]
+            adj_list = [[], []]
+
+            if not skip:
+                # get adj square coordinates for the pair
+                for dx, dy in self.compare:
+                    for i in range(len(pos)):
+                        delta_x, delta_y = [pos[i][0] + dx, pos[i][1] + dy]
+                        # check for out of bounds
+                        if not (delta_x < 0 or delta_y < 0 or
+                                delta_x >= len(self.initMaze) or delta_y >= len(self.initMaze)):
+                            # check for empty square
+                            if not self.has_been_colored[delta_x][delta_y]:
+                                # add square to current list
+                                adj_list[i].append(self.hole_matrix[delta_x][delta_y])
+                # check if pair share a hole
+                valid = False
+                for hole1 in adj_list[0]:
+                    for hole2 in adj_list[1]:
+                        if hole1 == hole2:
+                            try:
+                                # keep checking on a valid pair to remove all adj holes from the list
+                                valid = True
+                                # remove
+                                hole_list.remove(hole1)
+                            except ValueError:
+                                pass
+
+                # a pair of remaining ports cannot reach each other
+                if not valid:
+                    return False
+
+        # also check all available holes are used
+        if len(hole_list) > 0:
+            return False
+
+        # all tests passed
+        return True
+
     def check_end(self):
         for row in self.has_been_colored:
             for col in row:
@@ -432,6 +630,12 @@ class SolveMaze:
                 # still need to append the last color though
 
             else:
+                # grab the colors of the ports that have not yet been completed.
+                new_start_list = self.start_states
+                new_end_list = self.end_states
+                # use smart start to find most constrained of these colors
+                self.smart_start_2(new_start_list, new_end_list, self.tree.current_node.state.color)
+
                 # Add the next color's start node here, this also appends as a child of the current node
                 self.make_node2(self.next_start_state())
         else:
@@ -488,6 +692,10 @@ class SolveMaze:
                 self.tree.current_node.children = []
                 self.make_node2(self.current_end_state())
 
+            # order the children according to distance from the goal, no use on children list less then 2
+            if self.smart and self.manhattan and len(self.tree.current_node.children) > 1:
+                self.manhattan_ordering(True)
+
     def make_node(self, color, pos):
         node = N.Node(S.State(color, pos), self.tree.current_node)
         return node
@@ -503,8 +711,10 @@ class SolveMaze:
         :return: True if all test passed, False otherwise
         """
         if self.smart:
-            # TODO add extra smart checks here
-            pass
+            if not self.check_for_islands(self.tree.current_node.state.color):
+                return False
+            if not self.check_for_holes():
+                return False
 
         # No zig zags
         if not self.check_zigzag():
@@ -562,6 +772,8 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
+        # update hole tracking
+        self.__update_hole_matrix()
         # increment number of attempted variable assignments count
         self.vars_assigned += 1
 
@@ -584,6 +796,8 @@ class SolveMaze:
             x, y = node.state.pos
             # set the boolean array at this node's location to False
             self.has_been_colored[x][y] = False
+            # update hole tracking
+            self.__update_hole_matrix()
         else:
             # not important for non-port nodes since they are regenerated
             self.tree.current_node.state.expanded = False
