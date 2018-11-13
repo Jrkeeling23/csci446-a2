@@ -140,28 +140,28 @@ class SolveMaze:
         # initialize list to be returned
         edge_list = []
         # stores the size of the initial maze
-        size = len(self.initMaze)-1
+        size = len(self.initMaze) - 1
 
         # top left to top right
-        for x in range(0, size+1):
+        for x in range(0, size + 1):
             if self.initMaze[0][x] != '_':
                 # should add any initial color nodes in the top row
                 edge_list.append(S.State(self.initMaze[0][x], [0, x]))
 
         # top right to bottom right
-        for x in range(1, size+1):
+        for x in range(1, size + 1):
             if self.initMaze[x][size] != '_':
                 # should add any initial color nodes in the right side of the maze
                 edge_list.append(S.State(self.initMaze[x][size], [x, size]))
 
         # bottom right to bottom left
-        for x in range(size-1, -1, -1):
+        for x in range(size - 1, -1, -1):
             if self.initMaze[size][x] != '_':
                 # should add any initial color nodes in the bottom part of the maze
                 edge_list.append(S.State(self.initMaze[size][x], [size, x]))
 
         # bottom left to the top left
-        for x in range(size-1, 0, -1):
+        for x in range(size - 1, 0, -1):
             if self.initMaze[x][0] != '_':
                 # should add any initial color nodes in the left side of the maze
                 edge_list.append(S.State(self.initMaze[x][0], [x, 0]))
@@ -174,7 +174,6 @@ class SolveMaze:
         and if there are, it marks them as visted in the boolean 2D array,
         as well as reordering the colors from the domain & color_list
         so they aren't re-attempted when the program is running.
-
         TL;DR: It solves the edge cases first, and then lets the rest of the program run.
         :return:
         """
@@ -301,6 +300,10 @@ class SolveMaze:
         else:
             # return list of start states
             return start_node_list, end_node_list
+
+    def smart_start_2(self, start_list, end_list, color):
+        self.color_list_index = self.domain.index(color)
+        self.start_states, self.end_states = self.smart_start(start_list, end_list)
 
     def smart_start(self, start_list, end_list):
         """
@@ -542,6 +545,10 @@ class SolveMaze:
                 self.hole_index += 1
 
     def check_for_holes(self):
+        """
+        A hole is where any adjacent holes are empty.
+        :return:
+        """
         hole_list = []
         # find all holes in the maze
         for row in self.hole_matrix:
@@ -623,6 +630,12 @@ class SolveMaze:
                 # still need to append the last color though
 
             else:
+                # grab the colors of the ports that have not yet been completed.
+                new_start_list = self.start_states
+                new_end_list = self.end_states
+                # use smart start to find most constrained of these colors
+                self.smart_start_2(new_start_list, new_end_list, self.tree.current_node.state.color)
+
                 # Add the next color's start node here, this also appends as a child of the current node
                 self.make_node2(self.next_start_state())
         else:
