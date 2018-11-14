@@ -302,7 +302,7 @@ class SolveMaze:
             return start_node_list, end_node_list
 
     def smart_start_2(self, start_list, end_list, color):
-        self.color_list_index = self.domain.index(color)
+        self.color_list_index = self.domain.index(color) + 1
         self.start_states, self.end_states = self.smart_start(start_list, end_list)
 
     def smart_start(self, start_list, end_list):
