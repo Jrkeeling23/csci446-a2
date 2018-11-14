@@ -46,11 +46,6 @@ class SolveMaze:
         temp = len(maze[0])
         self.has_been_colored = [[False] * temp for i in range(temp)]
 
-        # set up empty square matrix for detecting holes / trapped colors
-        self.hole_matrix = [[-1] * temp for i in range(temp)]
-        # index for holes
-        self.hole_index = 0
-
         # set up answer array
         self.answer = [["_"] * temp for i in range(temp)]
 
@@ -501,104 +496,195 @@ class SolveMaze:
         while not order_queue.empty:
             self.tree.current_node.append_child(order_queue.get())
 
-    def __update_hole_matrix(self):
-        reevaluate = PriorityQueue.PriorityQueue()
-        reevaluate.priority = False
-        self.hole_index = 0
+    def check_for_patches(self):
+        # Contains the ports found in each patch
+        patch_lists = []
+        current_patch = 0
 
-        for row in range(len(self.initMaze)):
-            for col in range(len(self.initMaze)):
-                # only check empty squares
-                self.hole_matrix[row][col] = -1
-                if not self.has_been_colored[row][col]:
-                    reevaluate.put([row, col])
+        side_check = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
-        while not reevaluate.empty:
-            row, col = reevaluate.get()
-            adj_queue = PriorityQueue.PriorityQueue()
-            for dx, dy in self.compare:
-                i, j = row + dx, col + dy
-                # check for out of bounds
-                if not (i < 0 or j < 0 or i >= len(self.initMaze) or j >= len(self.initMaze)):
-                    # check for empty square
-                    if not self.hole_matrix[i][j] == -1:
-                        adj_queue.put([self.hole_matrix[i][j], [i, j]], self.hole_matrix[i][j])
+        # Makes a copy of the has_been_colored boolean table
+        bool_table = [row.copy() for row in self.has_been_colored]
 
-            # adj squares exist, update them
-            if not adj_queue.empty:
-                # set this hole to the lowest available value
-                min_val = adj_queue.get()[0]
-                # set this square to the min
-                self.hole_matrix[row][col] = min_val
-                # update higher adj values
-                while not adj_queue.empty:
-                    next_val = adj_queue.get()
-                    # don't reevaluate squares in the same hole
-                    if not next_val[0] == min_val:
-                        reevaluate.put(next_val[1])
-            # no adj squares
+        remaining_ports = self.start_states[self.domain.index(self.tree.current_node.state.color):]
+        remaining_ports += (self.end_states[self.domain.index(self.tree.current_node.state.color):])
+
+        # Makes the remaining ports False
+        for port in remaining_ports:
+            port_x = port.pos[0]
+            port_y = port.pos[1]
+
+            bool_table[port_x][port_y] = False
+
+        current_pos = self.tree.current_node.state.pos
+        bool_table[current_pos[0]][current_pos[1]] = True
+
+        # check each adjacent square to see if it is empty:
+        for pos in side_check:
+            # checks if adjacent node is empty
+            x = pos[0] + current_pos[0]
+            y = pos[1] + current_pos[1]
+
+            # Only check the side if it is valid (not out of bounds and hasn't already been visited)
+            if((not((x < 0) or (y < 0))) and
+                (not((x > len(bool_table)-1) or (y > len(bool_table)-1)))) and \
+                (not self.has_been_colored[x][y]):
+
+                if len(patch_lists) == 0:
+                    temp_list = []
+                    patch_lists.append(temp_list)
+                    # CHUG THROUGH all the nodes in the patch starting at [x, y]
+
+                    # Sets up the tree for traversing the path
+                    start_state = S.State(self.tree.current_node.state.color, [x, y])
+                    start_node = N.Node(start_state, None)
+                    path_tree = T.Tree(start_node)
+
+                    bool_table[x][y] = True
+                    # Calc children of the root node & forward it one step
+                    adj_list = [[-1, 0], [0, -1], [1, 0], [0, 1]]
+                    for adj in adj_list:
+                        adj_x = path_tree.current_node.state.pos[0] + adj[0]
+                        adj_y = path_tree.current_node.state.pos[1] + adj[1]
+
+                        # Checks if the adjacent node is a valid child
+                        if (not ((adj_x < 0) or (adj_y < 0))) and \
+                                (not ((adj_x > len(bool_table) - 1) or (adj_y > len(bool_table) - 1))) \
+                                and (not bool_table[adj_x][adj_y]):
+                            # Adds the child
+                            child = N.Node(S.State(self.tree.current_node.state.color, [adj_x, adj_y]), start_node)
+
+                    if len(path_tree.current_node.children) > 0:
+                        # forwards to child
+                        path_tree.forward_node()
+                        pos_x, pos_y = path_tree.current_node.state.pos
+                        bool_table[pos_x][pos_y] = True
+
+                        while path_tree.current_node != path_tree.root:
+                            # checks if the current node is a port
+                            for port in remaining_ports:
+                                if (pos_x == port.pos[0]) and (pos_y == port.pos[1]):
+                                    # stores the port in patch_lists
+                                    patch_lists[current_patch].append(port.color)
+                                    # Remove the port from the list
+                                    remaining_ports.remove(port)
+                            # Add children
+                            for adj in adj_list:
+                                adj_x = path_tree.current_node.state.pos[0] + adj[0]
+                                adj_y = path_tree.current_node.state.pos[1] + adj[1]
+
+                                # Checks if the adjacent node is a valid child
+                                if (not ((adj_x < 0) or (adj_y < 0))) and \
+                                        (not ((adj_x > len(bool_table) - 1)or(adj_y > len(bool_table) - 1))) \
+                                        and (not bool_table[adj_x][adj_y]):
+                                    # Adds the child
+                                    child = N.Node(S.State(self.tree.current_node.state.color, [adj_x, adj_y]), path_tree.current_node)
+                            if len(path_tree.current_node.children) > 0:
+                                # forwards to child
+                                path_tree.forward_node()
+                                pos_x, pos_y = path_tree.current_node.state.pos
+                                bool_table[pos_x][pos_y] = True
+                            elif path_tree.current_node.parent_Node is not None:
+                                path_tree.current_node.parent_Node.remove_current_child()
+                                path_tree.backtrack_node()
+                            else:
+                                print("ELSE")
+
+                else:
+
+                    # If not found in other patch list, make new patch
+                    temp_list = []
+                    patch_lists.append(temp_list)
+                    current_patch += 1
+                    # CHUG THROUGH all the nodes in the patch starting at x & y
+
+                    # Sets up the tree for traversing the path
+                    start_state = S.State(self.tree.current_node.state.color, [x, y])
+                    start_node = N.Node(start_state, None)
+                    path_tree = T.Tree(start_node)
+
+                    bool_table[x][y] = True
+
+                    # Calc children of the root node & forward it one step
+                    adj_list = [[-1, 0], [0, -1], [1, 0], [0, 1]]
+                    for adj in adj_list:
+                        adj_x = x + adj[0]
+                        adj_y = y + adj[1]
+
+                        # Checks if the adjacent node is a valid child
+                        if (not((adj_x < 0) or (adj_y < 0))) and \
+                                (not((adj_x > len(bool_table)-1)or(adj_y > len(bool_table)-1))) and \
+                                (not bool_table[adj_x][adj_y]):
+                            # Adds the child
+                            child = N.Node(S.State(self.tree.current_node.state.color, [adj_x, adj_y]), start_node)
+
+                    if len(path_tree.current_node.children) > 0:
+                        # forwards to child
+                        path_tree.forward_node()
+                        pos_x, pos_y = path_tree.current_node.state.pos
+                        bool_table[pos_x][pos_y] = True
+                        end_case = True
+
+                    while (path_tree.current_node != path_tree.root) and end_case:
+                        # checks if the current node is a port
+                        for port in remaining_ports:
+                            if (pos_x == port.pos[0]) and (pos_y == port.pos[1]):
+                                # stores the port in patch_lists
+                                patch_lists[current_patch].append(port.color)
+                                # Remove the port from the list
+                                remaining_ports.remove(port)
+                        # Add children
+                        for adj in adj_list:
+                            adj_x = x + adj[0]
+                            adj_y = y + adj[1]
+
+                            # Checks if the adjacent node is a valid child
+                            if (not ((adj_x < 0) or (adj_y < 0))) and (
+                            not ((adj_x > len(bool_table) - 1) or (adj_y > len(bool_table) - 1))) and (
+                            not bool_table[adj_x][adj_y]):
+                                # Adds the child
+                                child = N.Node(S.State(self.tree.current_node.state.color, [adj_x, adj_y]), path_tree.current_node)
+                        if len(path_tree.current_node.children) > 0:
+                            # forwards to child
+                            path_tree.forward_node()
+                            pos_x, pos_y = path_tree.current_node.state.pos
+                            bool_table[pos_x][pos_y] = True
+                        else:
+                            path_tree.current_node.parent_Node.remove_current_child()
+                            end_case = path_tree.backtrack_node() # returns True if succeeds (Parent not None)
+
             else:
-                self.hole_matrix[row][col] = self.hole_index
-                self.hole_index += 1
+                # The position being checked is already colored or out of bounds
+                print("OUT OF BOUNDS?")
+                pass
 
-    def check_for_holes(self):
-        hole_list = []
-        # find all holes in the maze
-        for row in self.hole_matrix:
-            for hole_num in row:
-                if hole_num >= 0 and not hole_list.__contains__(hole_num):
-                    hole_list.append(hole_num)
-
-        # for remaining port pairs, check
-        current_index = self.domain.index(self.tree.current_node.state.color)
-        for n in range(len(self.start_states[current_index:])):
-            skip = False
-            # use the current node instead of the start node for the current color
-            if n == 0:
-                pos = [self.tree.current_node.state.pos, self.current_end_state().pos]
-                # disable current color for check if the current state is adj to the end state
-                if abs(pos[0][0] - pos[1][0]) + abs(pos[0][1] - pos[1][1]) <= 1:
-                    skip = True
-            # use the starting port for unexpanded colors
+        patch_iter = 0
+        if len(patch_lists)-1 >= patch_iter:
+            temp_list = patch_lists[patch_iter].copy()
+        while patch_iter <= current_patch:
+            # Evaluates the patch
+            if (len(patch_lists) > 0) and (len(patch_lists[patch_iter]) > 0):
+                for color in temp_list:
+                    if patch_lists[patch_iter].count(color) == 2:
+                        patch_lists[patch_iter].remove(color)
+                        patch_lists[patch_iter].remove(color)
+                        # If it finishes here, it is fine.
+                        if len(patch_lists[patch_iter]) <= 0:
+                            return True
+                    elif self.tree.current_node.state.color is color:
+                        # Happens if the current color is in this patch
+                        patch_lists[current_patch].remove(color)
+                        if len(patch_lists[patch_iter]) <= 0:
+                            return True
+                    else:
+                        # Happens if there is a stray node in this path, meaning we walled it off from it's partner
+                        # BACKTRACK
+                        return False
             else:
-                pos = [self.start_states[current_index + n].pos, self.end_states[current_index + n].pos]
-            adj_list = [[], []]
-
-            if not skip:
-                # get adj square coordinates for the pair
-                for dx, dy in self.compare:
-                    for i in range(len(pos)):
-                        delta_x, delta_y = [pos[i][0] + dx, pos[i][1] + dy]
-                        # check for out of bounds
-                        if not (delta_x < 0 or delta_y < 0 or
-                                delta_x >= len(self.initMaze) or delta_y >= len(self.initMaze)):
-                            # check for empty square
-                            if not self.has_been_colored[delta_x][delta_y]:
-                                # add square to current list
-                                adj_list[i].append(self.hole_matrix[delta_x][delta_y])
-                # check if pair share a hole
-                valid = False
-                for hole1 in adj_list[0]:
-                    for hole2 in adj_list[1]:
-                        if hole1 == hole2:
-                            try:
-                                # keep checking on a valid pair to remove all adj holes from the list
-                                valid = True
-                                # remove
-                                hole_list.remove(hole1)
-                            except ValueError:
-                                pass
-
-                # a pair of remaining ports cannot reach each other
-                if not valid:
-                    return False
-
-        # also check all available holes are used
-        if len(hole_list) > 0:
-            return False
-
-        # all tests passed
-        return True
+                # BACKTRACK
+                # TODO: Reaching here when should be true?
+                return False
+            patch_iter += 1
 
     def check_end(self):
         for row in self.has_been_colored:
@@ -700,7 +786,7 @@ class SolveMaze:
         if self.smart:
             if not self.check_for_islands(self.tree.current_node.state.color):
                 return False
-            if not self.check_for_holes():
+            if not self.check_for_patches():
                 return False
 
         # No zig zags
@@ -718,11 +804,15 @@ class SolveMaze:
         """
 
         def backtrack():
-            # Move Tree backward
-            self.remove_from_trackers(self.tree.current_node)
-            # remove the current node from its parent's valid options
-            self.tree.current_node.parent_Node.remove_current_child()
-            self.tree.backtrack_node()
+            if self.tree.current_node.parent_Node is not None:
+                # Move Tree backward
+                self.remove_from_trackers(self.tree.current_node)
+                # remove the current node from its parent's valid options
+                self.tree.current_node.parent_Node.remove_current_child()
+                self.tree.backtrack_node()
+                return True
+            else:
+                return False
 
         def forward():
             # Move Tree forward
@@ -759,8 +849,7 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
-        # update hole tracking
-        self.__update_hole_matrix()
+
         # increment number of attempted variable assignments count
         self.vars_assigned += 1
 
@@ -784,7 +873,6 @@ class SolveMaze:
             # set the boolean array at this node's location to False
             self.has_been_colored[x][y] = False
             # update hole tracking
-            self.__update_hole_matrix()
         else:
             # not important for non-port nodes since they are regenerated
             self.tree.current_node.state.expanded = False
