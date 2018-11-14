@@ -23,7 +23,7 @@ class SolveMaze:
         self.edge_bonus = 20
         self.wall_bonus = 4
         self.png_name = "maze_bk" + str(len(maze))
-        self.animation_name = "maze_animation_holechecking"
+        self.animation_name = "animation_scj_01"
 
         self.finished = False
         self.initMaze = maze
@@ -573,8 +573,8 @@ class SolveMaze:
 
             if not skip:
                 # get adj square coordinates for the pair
-                for dx, dy in self.compare:
-                    for i in range(len(pos)):
+                for i in range(len(pos)):
+                    for dx, dy in self.compare:
                         delta_x, delta_y = [pos[i][0] + dx, pos[i][1] + dy]
                         # check for out of bounds
                         if not (delta_x < 0 or delta_y < 0 or
@@ -633,8 +633,10 @@ class SolveMaze:
                 # grab the colors of the ports that have not yet been completed.
                 new_start_list = self.start_states
                 new_end_list = self.end_states
-                # use smart start to find most constrained of these colors
-                self.smart_start_2(new_start_list, new_end_list, self.tree.current_node.state.color)
+
+                if self.smart:
+                    # use smart start to find most constrained of these colors
+                    self.smart_start_2(new_start_list, new_end_list, self.tree.current_node.state.color)
 
                 # Add the next color's start node here, this also appends as a child of the current node
                 self.make_node2(self.next_start_state())
@@ -772,8 +774,9 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
-        # update hole tracking
-        self.__update_hole_matrix()
+        if self.smart:
+            # update hole tracking
+            self.__update_hole_matrix()
         # increment number of attempted variable assignments count
         self.vars_assigned += 1
 
@@ -796,8 +799,9 @@ class SolveMaze:
             x, y = node.state.pos
             # set the boolean array at this node's location to False
             self.has_been_colored[x][y] = False
-            # update hole tracking
-            self.__update_hole_matrix()
+            if self.smart:
+                # update hole tracking
+                self.__update_hole_matrix()
         else:
             # not important for non-port nodes since they are regenerated
             self.tree.current_node.state.expanded = False
