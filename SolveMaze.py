@@ -328,8 +328,8 @@ class SolveMaze:
         # check surrounding
         for i in range(len(local_start_ls)):
             # obtain possible moves for each color
-            start_path_number.append(self.find_available_paths(local_start_ls[i]))
-            end_path_number.append(self.find_available_paths(local_end_ls[i]))
+            start_path_number.append(self.find_available_paths(local_start_ls[i].pos))
+            end_path_number.append(self.find_available_paths(local_end_ls[i].pos))
         # add path values to find most constrained value
         for i in range(len(local_start_ls)):
             # variable that holds summed available paths of start and end nodes, as well as color index
@@ -352,16 +352,16 @@ class SolveMaze:
 
         return new_start_list, new_end_list
 
-    def find_available_paths(self, node):
+    def find_available_paths(self, pos):
         """
         Finds available paths for a node and returns the number
-        :param node: The node to find the number of available paths for
+        :param pos: The position of the node to find the number of available paths for
         :return: returns available paths for a node
         """
         # counts number of available paths
         path = 0
         # find pos of adjacent states
-        x, y = node.pos
+        x, y = pos
         # list of adjacent node positions
         adj_nodes = [[x + dx, y + dy] for dx, dy in self.compare]
         for x, y in adj_nodes:
@@ -458,7 +458,7 @@ class SolveMaze:
             return True
         # test each remaining port
         for port in self.start_states[i:] + self.end_states[i:]:
-            if self.find_available_paths(port) == 0:
+            if self.find_available_paths(port.pos) == 0:
                 return False
         # no islands found
         return True
@@ -505,10 +505,17 @@ class SolveMaze:
             self.tree.current_node.append_child(order_queue.get())
 
     def __update_hole_matrix(self):
+        """
+        Updates the hole tracking matrix to reflect the current state of the maze
+        :return: Nothing
+        """
+        # reevaluate is the queue that contains all locations to be evaluated
         reevaluate = PriorityQueue.PriorityQueue()
         reevaluate.priority = False
+        # number of the current hole
         self.hole_index = 0
 
+        # add all empty squares to the reevaluate queue
         for row in range(len(self.initMaze)):
             for col in range(len(self.initMaze)):
                 # only check empty squares
@@ -516,6 +523,7 @@ class SolveMaze:
                 if not self.has_been_colored[row][col]:
                     reevaluate.put([row, col])
 
+        # evaluate all squares in the queue, when an error is detected add the violating square back on to the queue
         while not reevaluate.empty:
             row, col = reevaluate.get()
             adj_queue = PriorityQueue.PriorityQueue()
@@ -527,7 +535,7 @@ class SolveMaze:
                     if not self.hole_matrix[i][j] == -1:
                         adj_queue.put([self.hole_matrix[i][j], [i, j]], self.hole_matrix[i][j])
 
-            # adj squares exist, update them
+            # update this square with lowest value adj square, if higher values exist put them back on queue
             if not adj_queue.empty:
                 # set this hole to the lowest available value
                 min_val = adj_queue.get()[0]
@@ -546,17 +554,19 @@ class SolveMaze:
 
     def check_for_holes(self):
         """
-        A hole is where any adjacent holes are empty.
-        :return:
+        A hole is a set of empty squares that are all reachable from each-other, this function checks the conditions
+        that all unfinished ports share at least one hole in common and that no hole has no port pairs in it.
+        :return: True if the test is valid, otherwise False
         """
+        self.__update_hole_matrix()
         hole_list = []
-        # find all holes in the maze
+        # find all holes in the maze, assemble into a list to test if all holes are used
         for row in self.hole_matrix:
             for hole_num in row:
                 if hole_num >= 0 and not hole_list.__contains__(hole_num):
                     hole_list.append(hole_num)
 
-        # for remaining port pairs, check
+        # for remaining port pairs, check that they share a hole
         current_index = self.domain.index(self.tree.current_node.state.color)
         for n in range(len(self.start_states[current_index:])):
             skip = False
@@ -608,6 +618,10 @@ class SolveMaze:
         return True
 
     def check_end(self):
+        """
+        checks if final constraint is complete, that all squares have exactly one color
+        :return: True if the constraint is valid
+        """
         for row in self.has_been_colored:
             for col in row:
                 if not col:
@@ -713,10 +727,16 @@ class SolveMaze:
         :return: True if all test passed, False otherwise
         """
         if self.smart:
-            if not self.check_for_islands(self.tree.current_node.state.color):
+            color = self.tree.current_node.state.color
+            if not self.check_for_islands(color):
                 return False
-            if not self.check_for_holes():
-                return False
+            # check if last node had more options than this one, only if the length of the color list >= 2
+            color_index = self.domain.index(color)
+            if (len(self.color_lists[color_index]) >= 2 and
+                    self.find_available_paths(self.color_lists[color_index][-1]) <=
+                    self.find_available_paths(self.color_lists[color_index][-2]) + 1):
+                if not self.check_for_holes():
+                    return False
 
         # No zig zags
         if not self.check_zigzag():
@@ -774,9 +794,6 @@ class SolveMaze:
         x, y = node.state.pos
         # set the boolean array at this node's location to True
         self.has_been_colored[x][y] = True
-        if self.smart:
-            # update hole tracking
-            self.__update_hole_matrix()
         # increment number of attempted variable assignments count
         self.vars_assigned += 1
 
@@ -799,9 +816,6 @@ class SolveMaze:
             x, y = node.state.pos
             # set the boolean array at this node's location to False
             self.has_been_colored[x][y] = False
-            if self.smart:
-                # update hole tracking
-                self.__update_hole_matrix()
         else:
             # not important for non-port nodes since they are regenerated
             self.tree.current_node.state.expanded = False
